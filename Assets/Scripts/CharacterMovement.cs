@@ -9,6 +9,9 @@ public class CharacterMovement : MonoBehaviour
     public float moveSpeed = 5f;
     public float runSpeedMultiplier = 1.5f;
     public float jumpForce = 10f;
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    public float bulletSpeed = 20f;
     private bool isGrounded;
     private float groundCheckTimer = 0.1f;
     private float groundCheckCounter;
@@ -19,6 +22,7 @@ public class CharacterMovement : MonoBehaviour
     private InputAction moveAction;
     private InputAction jumpAction;
     private InputAction runAction;
+    private InputAction shootAction;
     private Vector2 cachedVelocity;
     private Gamepad cachedGamepad;
 
@@ -29,6 +33,7 @@ public class CharacterMovement : MonoBehaviour
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         runAction = playerInput.actions["Run"];
+        shootAction = playerInput.actions["Shoot"];
     }
 
     void Start()
@@ -98,6 +103,12 @@ public class CharacterMovement : MonoBehaviour
             isGrounded = false;
         }
 
+        // Ateş etme
+        if (shootAction.triggered)
+        {
+            Shoot();
+        }
+
         // Animator parametrelerini ayarla (isteğe bağlı)
         if (animator != null)
         {
@@ -127,5 +138,13 @@ public class CharacterMovement : MonoBehaviour
         {
             isGrounded = false;
         }
+    }
+
+    private void Shoot()
+    {
+        // Mermi oluştur ve ateş et
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+        bulletRb.velocity = new Vector2(transform.localScale.x * bulletSpeed, 0);
     }
 }
