@@ -4,10 +4,10 @@ using System.Collections;
 public class BasicMechanorot : EnemyBase
 {
     public float moveSpeed = 3f;
-    public float patrolRange = 5f; // Devriye alanı genişliği
-    public float detectionRange = 20f; // Karakteri görebileceği mesafe
+    public float detectionRange = 10f;
+    public float attackRange = 2f;
     public float shootRange = 15f; // Ateş etme mesafesi
-    public float chaseSpeed = 5f; // Alarm durumunda koşma hızı
+    public int damage = 10;
     public GameObject enemyBulletPrefab;
     public Transform firePoint;
     public float bulletSpeed = 15f;
@@ -16,11 +16,9 @@ public class BasicMechanorot : EnemyBase
     private Transform player;
     private Rigidbody2D rb;
     private Animator animator;
-    private bool isAlerted = false; // Düşmanın alarm durumunda olup olmadığını kontrol eder
+    private bool isAttacking = false;
     private bool isShooting = false;
     private float shootTimer;
-    private Vector2 initialPosition; // Devriye başlangıç noktası
-    private Vector2 patrolTarget;
 
     void Start()
     {
@@ -28,41 +26,40 @@ public class BasicMechanorot : EnemyBase
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         shootTimer = shootCooldown;
-        initialPosition = transform.position;
-        SetNewPatrolTarget();
     }
 
     void Update()
     {
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
-        if (isAlerted)
-        {
-            ChasePlayer();
-        }
-        else if (distanceToPlayer <= detectionRange && CanSeePlayer())
+        // Atış mesafesine ulaşıldığında hareketi durdurup ateş etmeye başla
+        if (distanceToPlayer <= shootRange && distanceToPlayer > attackRange && !isAttacking)
         {
             StopAndShoot();
         }
+        else if (distanceToPlayer <= detectionRange && distanceToPlayer > shootRange && !isAttacking)
+        {
+            MoveTowardsPlayer();
+        }
+        else if (distanceToPlayer <= attackRange && !isAttacking)
+        {
+            StartCoroutine(AttackPlayer());
+        }
         else
         {
-            Patrol();
+            // Düşman hareket etmiyorsa animasyonu durdur
+            if (animator != null)
+            {
+                animator.SetBool("isMoving", false);
+            }
         }
     }
 
-    void Patrol()
+    void MoveTowardsPlayer()
     {
-        // Devriye hareketi için hedefe doğru yumuşak geçiş
-        Vector2 direction = (patrolTarget - (Vector2)transform.position).normalized;
-        rb.velocity = direction * moveSpeed;
+        Vector2 direction = (player.position - transform.position).normalized;
+        rb.velocity = new Vector2(direction.x * moveSpeed, rb.velocity.y);
 
-        // Hedefe ulaşıldığında yeni devriye hedefi belirle
-        if (Vector2.Distance(transform.position, patrolTarget) < 0.2f)
-        {
-            SetNewPatrolTarget();
-        }
-
-        // Yüz yönünü devriye yönüne göre ayarla
         if (direction.x > 0)
         {
             transform.localScale = new Vector3(1, transform.localScale.y, transform.localScale.z);
@@ -78,31 +75,18 @@ public class BasicMechanorot : EnemyBase
         }
     }
 
-    void SetNewPatrolTarget()
-    {
-        // Rastgele bir devriye hedefi belirle
-        float patrolX = initialPosition.x + Random.Range(-patrolRange, patrolRange);
-        float patrolY = initialPosition.y;
-        patrolTarget = new Vector2(patrolX, patrolY);
-    }
-
-    bool CanSeePlayer()
-    {
-        // Basit görüş algılaması (Görüş alanında ve engel yoksa oyuncuyu görür)
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, (player.position - transform.position).normalized, detectionRange);
-        return hit.collider != null && hit.collider.CompareTag("Player");
-    }
-
     void StopAndShoot()
     {
         rb.velocity = Vector2.zero;
         isShooting = true;
 
+        // Animator varsa hareket animasyonunu durdur
         if (animator != null)
         {
             animator.SetBool("isMoving", false);
         }
 
+        // Ateş etme işlemi
         shootTimer -= Time.deltaTime;
         if (shootTimer <= 0)
         {
@@ -111,31 +95,21 @@ public class BasicMechanorot : EnemyBase
         }
     }
 
-    void ChasePlayer()
+    IEnumerator AttackPlayer()
     {
-        Vector2 direction = (player.position - transform.position).normalized;
-        rb.velocity = direction * chaseSpeed;
-
-        // Düşmanın yüz yönünü oyuncuya göre ayarla
-        if (direction.x > 0)
-        {
-            transform.localScale = new Vector3(1, transform.localScale.y, transform.localScale.z);
-        }
-        else if (direction.x < 0)
-        {
-            transform.localScale = new Vector3(-1, transform.localScale.y, transform.localScale.z);
-        }
+        isAttacking = true;
+        rb.velocity = Vector2.zero;
 
         if (animator != null)
         {
-            animator.SetBool("isMoving", true);
+            animator.SetTrigger("Attack");
         }
-    }
 
-    public void Alert()
-    {
-        isAlerted = true;
-        Debug.Log("Düşman alarma geçti!");
+        Debug.Log("Player'a saldırıldı!");
+
+        yield return new WaitForSeconds(1f);
+
+        isAttacking = false;
     }
 
     void Shoot()
@@ -157,6 +131,11 @@ public class BasicMechanorot : EnemyBase
         Debug.Log("Ateş edildi!");
     }
 
+    public void IncreaseSpeed(float multiplier)
+    {
+        moveSpeed *= multiplier;
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("PlayerBullet"))
@@ -165,7 +144,6 @@ public class BasicMechanorot : EnemyBase
             if (bullet != null)
             {
                 TakeDamage(bullet.damage);
-                Alert(); // Oyuncu mermisi değdiğinde alarm durumuna geç
             }
             Destroy(other.gameObject);
         }
