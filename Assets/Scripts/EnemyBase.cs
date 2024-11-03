@@ -24,7 +24,7 @@ public class EnemyBase : MonoBehaviour
     protected virtual void Die()
     {
         Debug.Log(gameObject.name + " öldü!");
-        Destroy(gameObject, 1f);
+        Destroy(gameObject, 5f);
     }
 
     // Düşmanı alarma geçiren metod

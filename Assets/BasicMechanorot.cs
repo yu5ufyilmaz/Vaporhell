@@ -7,7 +7,7 @@ public class BasicMechanorot : EnemyBase
     public float detectionRange = 10f;
     public float attackRange = 2f;
     public float shootRange = 15f; // Ateş etme mesafesi
-    public int damage = 10;
+    public int damage = 50;
     public GameObject enemyBulletPrefab;
     public Transform firePoint;
     public float bulletSpeed = 15f;

@@ -1,80 +1,126 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
     public int maxHealth = 100;
-    private int currentHealth;
+    private int _currentHealth;
 
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float bulletSpeed = 20f;
+    public float moveSpeed = 5f;
+    public float runSpeedMultiplier = 1.5f;
+    public float jumpForce = 10f;
+    public float deathGravityScale = 0.0f; // Ölüm sırasında yerinde kalması için düşük gravity
+
+    private bool _isGrounded;
+    private bool _isDead = false; // Ölüm durumu kontrolü
+    private Rigidbody2D _rb;
+    private SpriteRenderer _spriteRenderer;
+    private Animator _animator;
     private PlayerInput _playerInput;
     private InputAction _shootAction;
     private InputAction _moveAction;
-    private bool facingRight = true; // Oyuncunun başlangıç yönü sağ
+    private InputAction _jumpAction;
+    private InputAction _runAction;
 
     void Awake()
     {
         _playerInput = GetComponent<PlayerInput>();
         _shootAction = _playerInput.actions["Shoot"];
         _moveAction = _playerInput.actions["Move"];
+        _jumpAction = _playerInput.actions["Jump"];
+        _runAction = _playerInput.actions["Run"];
     }
 
     void Start()
     {
-        currentHealth = maxHealth;
+        _rb = GetComponent<Rigidbody2D>();
+        _animator = GetComponent<Animator>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        _currentHealth = maxHealth;
     }
 
     void Update()
     {
+        if (_isDead) return; // Eğer ölü ise hareketi durdur
+
         Vector2 moveInput = _moveAction.ReadValue<Vector2>();
+        float currentSpeed = moveSpeed;
 
-        // Hareket input'una göre oyuncunun yüz yönünü güncelle
-        if (moveInput.x > 0 && !facingRight)
+        bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
+        if (_runAction.IsPressed())
         {
-            Flip();
-        }
-        else if (moveInput.x < 0 && facingRight)
-        {
-            Flip();
+            currentSpeed *= runSpeedMultiplier;
         }
 
-        // Ateş etme aksiyonunu kontrol et
+        _rb.velocity = new Vector2(moveInput.x * currentSpeed, _rb.velocity.y);
+
+        if (moveInput.x > 0)
+        {
+            _spriteRenderer.flipX = true;
+        }
+        else if (moveInput.x < 0)
+        {
+            _spriteRenderer.flipX = false;
+        }
+
+        _animator.SetBool("isMoving", isMoving);
+
         if (_shootAction.triggered)
         {
             Shoot();
+        }
+
+        if (_jumpAction.triggered && _isGrounded)
+        {
+            Jump(isMoving);
         }
     }
 
     private void Shoot()
     {
-        // Mermiyi firePoint pozisyonunda oluştur
+        if (_isDead) return;
+
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
         Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-
-        // Oyuncunun yüzüne dönük yönüne göre merminin hızını ayarla
-        Vector2 shootDirection = facingRight ? Vector2.right : Vector2.left;
+        Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
         bulletRb.velocity = shootDirection * bulletSpeed;
-
-        Debug.Log("Ateş edildi!");
     }
 
-    private void Flip()
+    private void Jump(bool isMoving)
     {
-        // Oyuncunun yüzünü tersine çevir
-        facingRight = !facingRight;
-        Vector3 localScale = transform.localScale;
-        localScale.x *= -1;
-        transform.localScale = localScale;
+        _rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        _isGrounded = false;
+
+        _animator.SetBool("isJumping", true);
+        _animator.SetBool("isMoving", isMoving);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = true;
+            _animator.SetBool("isJumping", false);
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = false;
+        }
     }
 
     public void TakeDamage(int damageAmount)
     {
-        currentHealth -= damageAmount;
-        Debug.Log("Player hasar aldı: " + damageAmount);
+        _currentHealth -= damageAmount;
 
-        if (currentHealth <= 0)
+        if (_currentHealth <= 0 && !_isDead)
         {
             Die();
         }
@@ -82,17 +128,35 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
-        Debug.Log("Player öldü!");
-        Destroy(gameObject);
+        if (_isDead) return; // Eğer zaten ölü ise tekrar işlem yapma
+
+        _isDead = true;
+        _animator.SetTrigger("DieTrigger"); // Ölüm animasyonunu tetikle
+
+        _rb.velocity = Vector2.zero; // Hareketi durdur
+        _rb.gravityScale = deathGravityScale; // Yavaş düşüş için gravity ayarı
+        _rb.constraints = RigidbodyConstraints2D.FreezePositionY; // Y ekseninde hareketi dondur
+
+        _playerInput.enabled = false; // Oyuncu kontrolünü devre dışı bırak
+
+        StartCoroutine(DeathSequence());
+    }
+
+    private IEnumerator DeathSequence()
+    {
+        yield return new WaitForSeconds(5f); // Ölüm animasyonu süresince bekle
+
+        Destroy(gameObject); // Karakteri yok et
     }
 
     public void Heal(int healAmount)
     {
-        currentHealth += healAmount;
-        if (currentHealth > maxHealth)
+        if (_isDead) return;
+
+        _currentHealth += healAmount;
+        if (_currentHealth > maxHealth)
         {
-            currentHealth = maxHealth;
+            _currentHealth = maxHealth;
         }
-        Debug.Log("Player iyileşti: " + healAmount);
     }
 }
