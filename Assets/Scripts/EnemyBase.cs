@@ -3,8 +3,7 @@ using UnityEngine;
 public class EnemyBase : MonoBehaviour
 {
     public int health = 100;
-    public float runSpeedMultiplier = 2f; // Düşmanın koşma hızı için çarpan
-    private bool isAlerted = false; // Düşmanın alarma geçip geçmediğini kontrol eder
+    private bool isAlerted = false;
 
     public virtual void TakeDamage(int damageAmount)
     {
@@ -27,15 +26,12 @@ public class EnemyBase : MonoBehaviour
         Destroy(gameObject, 5f);
     }
 
-    // Düşmanı alarma geçiren metod
     protected virtual void Alert()
     {
         if (!isAlerted)
         {
             isAlerted = true;
-            Debug.Log(gameObject.name + " alarma geçti ve koşmaya başladı!");
-            // Düşmanın hızını artır veya başka bir tepki ver
-            GetComponent<BasicMechanorot>().IncreaseSpeed(runSpeedMultiplier);
+            Debug.Log(gameObject.name + " alarma geçti!");
         }
     }
 }

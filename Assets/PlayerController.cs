@@ -10,9 +10,9 @@ public class PlayerController : MonoBehaviour
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float bulletSpeed = 20f;
-    public float moveSpeed = 5f;
+    public float moveSpeed = 10f;
     public float runSpeedMultiplier = 1.5f;
-    public float jumpForce = 10f;
+    public float jumpForce = 3f;
     public float deathGravityScale = 0.0f; // Ölüm sırasında yerinde kalması için düşük gravity
 
     private bool _isGrounded;
@@ -69,14 +69,14 @@ public class PlayerController : MonoBehaviour
 
         _animator.SetBool("isMoving", isMoving);
 
+        if (_jumpAction.triggered && _isGrounded)
+        {
+            Jump();
+        }
+
         if (_shootAction.triggered)
         {
             Shoot();
-        }
-
-        if (_jumpAction.triggered && _isGrounded)
-        {
-            Jump(isMoving);
         }
     }
 
@@ -90,13 +90,11 @@ public class PlayerController : MonoBehaviour
         bulletRb.velocity = shootDirection * bulletSpeed;
     }
 
-    private void Jump(bool isMoving)
+    private void Jump()
     {
         _rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         _isGrounded = false;
-
-        _animator.SetBool("isJumping", true);
-        _animator.SetBool("isMoving", isMoving);
+        _animator.SetBool("isJumping", true); // Zıplama animasyonunu tetikle
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -104,7 +102,7 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             _isGrounded = true;
-            _animator.SetBool("isJumping", false);
+            _animator.SetBool("isJumping", false); // Yere indiğinde zıplama animasyonunu kapat
         }
     }
 
