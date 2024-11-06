@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
@@ -26,6 +27,13 @@ public class PlayerController : MonoBehaviour
     private InputAction _jumpAction;
     private InputAction _runAction;
 
+    private CinemachineVirtualCamera _cinemachineVirtualCamera;
+    public Vector3 offsetRight = new Vector3(2f, 0, 0); // Sağa bakarken ofset
+    public Vector3 offsetLeft = new Vector3(-2f, 0, 0); // Sola bakarken ofset
+    private Vector3 targetOffset; // Kameranın ulaşmaya çalışacağı ofset
+    public float transitionDuration = 0.5f; // Geçiş süresi
+    private Coroutine offsetTransitionCoroutine;
+
     void Awake()
     {
         _playerInput = GetComponent<PlayerInput>();
@@ -41,16 +49,15 @@ public class PlayerController : MonoBehaviour
         _animator = GetComponent<Animator>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _currentHealth = maxHealth;
+        _cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
     }
 
-    void Update()
+    private void Update()
     {
-        if (_isDead) return; // Eğer ölü ise hareketi durdur
-
         Vector2 moveInput = _moveAction.ReadValue<Vector2>();
+        bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
         float currentSpeed = moveSpeed;
 
-        bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
         if (_runAction.IsPressed())
         {
             currentSpeed *= runSpeedMultiplier;
@@ -58,6 +65,7 @@ public class PlayerController : MonoBehaviour
 
         _rb.velocity = new Vector2(moveInput.x * currentSpeed, _rb.velocity.y);
 
+        // Hareket yönüne göre karakterin bakış yönünü ayarla
         if (moveInput.x > 0)
         {
             _spriteRenderer.flipX = true;
@@ -65,6 +73,24 @@ public class PlayerController : MonoBehaviour
         else if (moveInput.x < 0)
         {
             _spriteRenderer.flipX = false;
+        }
+
+        // Yeni hedef ofseti belirle
+        Vector3 newTargetOffset = isMoving ? Vector3.zero : (_spriteRenderer.flipX ? offsetRight : offsetLeft);
+
+        // Eğer hedef ofset değiştiyse geçişi başlat
+        if (newTargetOffset != targetOffset)
+        {
+            targetOffset = newTargetOffset;
+
+            // Önceki coroutine'i durdur (varsa)
+            if (offsetTransitionCoroutine != null)
+            {
+                StopCoroutine(offsetTransitionCoroutine);
+            }
+
+            // Yeni geçiş coroutine'ini başlat
+            offsetTransitionCoroutine = StartCoroutine(SmoothTransitionToOffset(targetOffset, transitionDuration));
         }
 
         _animator.SetBool("isMoving", isMoving);
@@ -78,6 +104,23 @@ public class PlayerController : MonoBehaviour
         {
             Shoot();
         }
+    }
+
+    private IEnumerator SmoothTransitionToOffset(Vector3 targetOffset, float duration)
+    {
+        var framingTransposer = _cinemachineVirtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>();
+        Vector3 initialOffset = framingTransposer.m_TrackedObjectOffset;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            framingTransposer.m_TrackedObjectOffset = Vector3.Lerp(initialOffset, targetOffset, elapsed / duration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // Geçiş tamamlandıktan sonra tam hedef pozisyona ayarlayın
+        framingTransposer.m_TrackedObjectOffset = targetOffset;
     }
 
     private void Shoot()
