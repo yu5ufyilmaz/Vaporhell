@@ -2484,6 +2484,11 @@ Tilemap:
     m_Data: {fileID: 11400000, guid: b01d861f39343cb438e9a23ddacb223b, type: 2}
   - m_RefCount: 0
     m_Data: {fileID: 0}
+<<<<<<< Updated upstream
+=======
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
+>>>>>>> Stashed changes
   m_TileSpriteArray:
   - m_RefCount: 22
     m_Data: {fileID: -1120362116, guid: 4e6100b5f252bdd4c80fa27d52cf6e4e, type: 3}
@@ -2499,6 +2504,11 @@ Tilemap:
     m_Data: {fileID: -881499039, guid: 4e6100b5f252bdd4c80fa27d52cf6e4e, type: 3}
   - m_RefCount: 0
     m_Data: {fileID: 0}
+<<<<<<< Updated upstream
+=======
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
+>>>>>>> Stashed changes
   m_TileMatrixArray:
   - m_RefCount: 155
     m_Data:
@@ -2524,8 +2534,13 @@ Tilemap:
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
+<<<<<<< Updated upstream
   m_Origin: {x: -29, y: -8, z: 0}
   m_Size: {x: 31, y: 8, z: 1}
+=======
+  m_Origin: {x: -30, y: -8, z: 0}
+  m_Size: {x: 35, y: 12, z: 1}
+>>>>>>> Stashed changes
   m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
