@@ -140,6 +140,9 @@ MonoBehaviour:
   runSpeedMultiplier: 1.5
   jumpForce: 5
   deathGravityScale: 0
+  offsetRight: {x: 2, y: 0, z: 0}
+  offsetLeft: {x: -2, y: 0, z: 0}
+  transitionDuration: 0.5
 --- !u!50 &8052004514429362280
 Rigidbody2D:
   serializedVersion: 4

@@ -51,17 +51,18 @@ public class BasicMechanorot : EnemyBase
         }
         else
         {
+            // Bekleme (idle) durumuna geçiş
+            rb.velocity = Vector2.zero;
             if (animator != null)
             {
-                animator.SetBool("isMoving", false);
+                animator.SetBool("isWalking", false); // Idle animasyonunu oynat
             }
         }
     }
 
     void MoveTowardsPlayer()
     {
-        // Player'a doğru koşarken animasyon hızını artır
-        animator.speed = 1.5f; // Hızlandırılmış animasyon
+        animator.speed = 1.5f; // Koşma hızıyla animasyon hızını artır
         Vector2 direction = (player.position - transform.position).normalized;
         rb.velocity = new Vector2(direction.x * moveSpeed * runSpeedMultiplier, rb.velocity.y);
 
@@ -76,14 +77,13 @@ public class BasicMechanorot : EnemyBase
 
         if (animator != null)
         {
-            animator.SetBool("isMoving", true);
+            animator.SetBool("isWalking", true); // Yürüyüş animasyonunu tetikle
         }
     }
 
     void Patrol()
     {
-        // Devriye sırasında animasyon hızını varsayılana döndür
-        animator.speed = 1.0f;
+        animator.speed = 1.0f; // Devriye sırasında animasyon hızını varsayılana döndür
 
         if (patrolPoints.Length == 0) return;
         if (isWaiting) return;
@@ -108,7 +108,7 @@ public class BasicMechanorot : EnemyBase
 
         if (animator != null)
         {
-            animator.SetBool("isMoving", true);
+            animator.SetBool("isWalking", true); // Yürüyüş animasyonunu tetikle
         }
     }
 
@@ -117,13 +117,12 @@ public class BasicMechanorot : EnemyBase
         isAttacking = true;
         rb.velocity = Vector2.zero;
 
-        int attackType = Random.Range(0, 2);
         if (animator != null)
         {
-            animator.SetTrigger(attackType == 0 ? "Attack1" : "Attack2");
+            animator.SetTrigger("isAttacking"); // Saldırı animasyonunu tetikle
         }
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(attackCooldown);
 
         isAttacking = false;
     }
@@ -132,7 +131,7 @@ public class BasicMechanorot : EnemyBase
     {
         isWaiting = true;
         rb.velocity = Vector2.zero;
-        animator.SetBool("isMoving", false);
+        animator.SetBool("isWalking", false); // Devriye sırasında durduğunda idle animasyonu oynat
 
         yield return new WaitForSeconds(waitTimeAtPatrolPoint);
 
@@ -161,7 +160,7 @@ public class BasicMechanorot : EnemyBase
 
         if (animator != null)
         {
-            animator.SetTrigger("TakeDamage");
+            animator.SetTrigger("isTakingDamage"); // Hasar alma animasyonunu tetikle
         }
 
         if (currentHealth <= 0)
@@ -174,7 +173,7 @@ public class BasicMechanorot : EnemyBase
     {
         if (animator != null)
         {
-            animator.SetTrigger("Die");
+            animator.SetTrigger("isDead"); // Ölüm animasyonunu tetikle
         }
 
         rb.velocity = Vector2.zero;
