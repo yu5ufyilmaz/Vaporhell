@@ -14,10 +14,13 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 10f;
     public float runSpeedMultiplier = 1.5f;
     public float jumpForce = 3f;
-    public float deathGravityScale = 0.0f; // Ölüm sırasında yerinde kalması için düşük gravity
+    public float deathGravityScale = 0.0f;
+
+    public int maxJumps = 2; // Maksimum zıplama sayısı (çift zıplama için 2)
+    private int remainingJumps;
 
     private bool _isGrounded;
-    private bool _isDead = false; // Ölüm durumu kontrolü
+    private bool _isDead = false;
     private Rigidbody2D _rb;
     private SpriteRenderer _spriteRenderer;
     private Animator _animator;
@@ -28,10 +31,10 @@ public class PlayerController : MonoBehaviour
     private InputAction _runAction;
 
     private CinemachineVirtualCamera _cinemachineVirtualCamera;
-    public Vector3 offsetRight = new Vector3(2f, 0, 0); // Sağa bakarken ofset
-    public Vector3 offsetLeft = new Vector3(-2f, 0, 0); // Sola bakarken ofset
-    private Vector3 targetOffset; // Kameranın ulaşmaya çalışacağı ofset
-    public float transitionDuration = 0.5f; // Geçiş süresi
+    public Vector3 offsetRight = new Vector3(2f, 0, 0);
+    public Vector3 offsetLeft = new Vector3(-2f, 0, 0);
+    private Vector3 targetOffset;
+    public float transitionDuration = 0.5f;
     private Coroutine offsetTransitionCoroutine;
 
     void Awake()
@@ -50,6 +53,8 @@ public class PlayerController : MonoBehaviour
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _currentHealth = maxHealth;
         _cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
+
+        remainingJumps = maxJumps; // Başlangıçta maksimum zıplama hakkı
     }
 
     private void Update()
@@ -65,7 +70,6 @@ public class PlayerController : MonoBehaviour
 
         _rb.velocity = new Vector2(moveInput.x * currentSpeed, _rb.velocity.y);
 
-        // Hareket yönüne göre karakterin bakış yönünü ayarla
         if (moveInput.x > 0)
         {
             _spriteRenderer.flipX = true;
@@ -74,28 +78,25 @@ public class PlayerController : MonoBehaviour
         {
             _spriteRenderer.flipX = false;
         }
+        
 
-        // Yeni hedef ofseti belirle
         Vector3 newTargetOffset = isMoving ? Vector3.zero : (_spriteRenderer.flipX ? offsetRight : offsetLeft);
 
-        // Eğer hedef ofset değiştiyse geçişi başlat
         if (newTargetOffset != targetOffset)
         {
             targetOffset = newTargetOffset;
 
-            // Önceki coroutine'i durdur (varsa)
             if (offsetTransitionCoroutine != null)
             {
                 StopCoroutine(offsetTransitionCoroutine);
             }
 
-            // Yeni geçiş coroutine'ini başlat
             offsetTransitionCoroutine = StartCoroutine(SmoothTransitionToOffset(targetOffset, transitionDuration));
         }
 
         _animator.SetBool("isMoving", isMoving);
 
-        if (_jumpAction.triggered && _isGrounded)
+        if (_jumpAction.triggered && remainingJumps > 0)
         {
             Jump();
         }
@@ -119,7 +120,6 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
 
-        // Geçiş tamamlandıktan sonra tam hedef pozisyona ayarlayın
         framingTransposer.m_TrackedObjectOffset = targetOffset;
     }
 
@@ -135,9 +135,9 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        _rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-        _isGrounded = false;
-        _animator.SetBool("isJumping", true); // Zıplama animasyonunu tetikle
+        _rb.velocity = new Vector2(_rb.velocity.x, jumpForce);
+        remainingJumps--;
+        _animator.SetBool("isJumping", true);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -145,7 +145,8 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             _isGrounded = true;
-            _animator.SetBool("isJumping", false); // Yere indiğinde zıplama animasyonunu kapat
+            remainingJumps = maxJumps; // Yere temas ettiğinde zıplama hakkını sıfırla
+            _animator.SetBool("isJumping", false);
         }
     }
 
@@ -169,25 +170,25 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
-        if (_isDead) return; // Eğer zaten ölü ise tekrar işlem yapma
+        if (_isDead) return;
 
         _isDead = true;
-        _animator.SetTrigger("DieTrigger"); // Ölüm animasyonunu tetikle
+        _animator.SetTrigger("DieTrigger");
 
-        _rb.velocity = Vector2.zero; // Hareketi durdur
-        _rb.gravityScale = deathGravityScale; // Yavaş düşüş için gravity ayarı
-        _rb.constraints = RigidbodyConstraints2D.FreezePositionY; // Y ekseninde hareketi dondur
+        _rb.velocity = Vector2.zero;
+        _rb.gravityScale = deathGravityScale;
+        _rb.constraints = RigidbodyConstraints2D.FreezePositionY;
 
-        _playerInput.enabled = false; // Oyuncu kontrolünü devre dışı bırak
+        _playerInput.enabled = false;
 
         StartCoroutine(DeathSequence());
     }
 
     private IEnumerator DeathSequence()
     {
-        yield return new WaitForSeconds(5f); // Ölüm animasyonu süresince bekle
+        yield return new WaitForSeconds(5f);
 
-        Destroy(gameObject); // Karakteri yok et
+        Destroy(gameObject);
     }
 
     public void Heal(int healAmount)

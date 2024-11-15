@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
@@ -8,6 +9,7 @@ public class UIController : MonoBehaviour
     public GameObject minimapLargeUI;
     public GameObject pauseMenuUI;
     public GameObject optionsPanel;
+    private PlayerController playerController;
 
     private bool isPaused = false;
     private bool isMinimapLarge = false;
@@ -35,6 +37,11 @@ public class UIController : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    private void Start()
+    {
+        playerController = FindObjectOfType<PlayerController>();
     }
 
     private void Update()
@@ -92,14 +99,31 @@ public class UIController : MonoBehaviour
 
         if (isMinimapLarge)
         {
+            // Minimap açıldığında oyun duraklatılsın ve kontroller devre dışı bırakılsın
             Time.timeScale = 0;
+
+            // Oyuncu hareketini devre dışı bırak
+            if (playerController != null)
+            {
+                playerController.enabled = false;
+            }
+
+            controls.Player.Disable();
+            controls.UI.Enable();
         }
         else
         {
-            if (!isPaused)
+            // Minimap kapandığında oyunu devam ettir ve kontrolleri tekrar etkinleştir
+            Time.timeScale = isPaused ? 0 : 1;
+
+            // Oyuncu hareketini tekrar etkinleştir
+            if (playerController != null)
             {
-                Time.timeScale = 1;
+                playerController.enabled = true;
             }
+
+            controls.Player.Enable();
+            controls.UI.Enable();
         }
 
         Debug.Log("Minimap durumu: " + (isMinimapLarge ? "Büyük" : "Küçük"));
@@ -129,6 +153,30 @@ public class UIController : MonoBehaviour
 
     private void PauseGame()
     {
+        if (EventSystem.current != null && pauseMenuUI != null)
+        {
+            GameObject resumeButton = pauseMenuUI.transform.Find("Buttons/Resume")?.gameObject;
+            if (resumeButton != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+                EventSystem.current.SetSelectedGameObject(resumeButton);
+            }
+            else
+            {
+                Debug.LogWarning("Resume butonu bulunamadı.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("EventSystem veya pauseMenuUI null.");
+        }
+        
+        // Oyuncu komutlarını durdur
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+        }
+
         isPaused = true;
         Time.timeScale = 0;
         controls.Player.Disable();
@@ -142,6 +190,12 @@ public class UIController : MonoBehaviour
 
         // Minimap büyük değilse oyunu devam ettir
         Time.timeScale = isMinimapLarge ? 0 : 1;
+
+        // Oyuncu komutlarını yeniden etkinleştir
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+        }
 
         controls.Player.Enable();
         controls.UI.Enable();
@@ -158,12 +212,32 @@ public class UIController : MonoBehaviour
     public void OnRestartButtonPressed()
     {
         Time.timeScale = 1;
+
+        // Tüm UI öğelerini kapat
+        pauseMenuUI.SetActive(false);
+        minimapLargeUI.SetActive(false);
+        optionsPanel.SetActive(false);
+
+        isPaused = false;
+        isMinimapLarge = false;
+
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void OnOptionsButtonPressed()
     {
         optionsPanel.SetActive(true);
+        
+        // Pause menüsündeki butonları devre dışı bırak
+        SetPauseMenuButtonsInteractable(false);
+    }
+
+    public void OnOptionsBackButtonPressed()
+    {
+        optionsPanel.SetActive(false);
+        
+        // Pause menüsündeki butonları tekrar etkinleştir
+        SetPauseMenuButtonsInteractable(true);
     }
 
     public void OnMainMenuButtonPressed()
@@ -183,8 +257,16 @@ public class UIController : MonoBehaviour
         QualitySettings.SetQualityLevel(qualityIndex);
     }
 
-    public void OnOptionsBackButtonPressed()
+    // Pause menüsündeki butonların etkileşimini ayarlayan fonksiyon
+    private void SetPauseMenuButtonsInteractable(bool interactable)
     {
-        optionsPanel.SetActive(false);
+        foreach (Transform child in pauseMenuUI.transform.Find("Buttons"))
+        {
+            var button = child.GetComponent<UnityEngine.UI.Button>();
+            if (button != null)
+            {
+                button.interactable = interactable;
+            }
+        }
     }
 }

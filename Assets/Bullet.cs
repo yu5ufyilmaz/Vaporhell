@@ -31,7 +31,7 @@ public class Bullet : MonoBehaviour
             }
             Destroy(gameObject);
         }
-        else if (collision.CompareTag("Wall") || collision.CompareTag("Ground"))
+        else if ( collision.CompareTag("Ground"))
         {
             Destroy(gameObject);
         }
