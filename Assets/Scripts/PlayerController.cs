@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     private static readonly int IsJumping = Animator.StringToHash("isJumping");
     private static readonly int DieTrigger = Animator.StringToHash("DieTrigger");
     private static readonly int RollTrigger = Animator.StringToHash("RollTrigger");
+    private static readonly int IsCrouching = Animator.StringToHash("isCrouching");
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -34,6 +35,14 @@ public class PlayerController : MonoBehaviour
     private int remainingJumps;
     private bool _isGrounded;
     private bool _isDead = false;
+    
+    // Crouch Parameters
+    [Header("Crouch Parameters")]
+    [SerializeField] private Vector2 crouchColliderSize = new Vector2(1f, 0.5f); // Crouch sırasında collider boyutu
+    [SerializeField] private Vector2 normalColliderSize = new Vector2(1f, 1f); // Normal collider boyutu
+
+    private bool isCrouching = false;
+
 
     // Roll Parameters
     [Header("Roll Parameters")]
@@ -64,6 +73,7 @@ public class PlayerController : MonoBehaviour
     private InputAction _jumpAction;
     private InputAction _runAction;
     private InputAction _rollAction;
+    private InputAction _crouchAction; 
 
     void Awake()
     {
@@ -72,7 +82,8 @@ public class PlayerController : MonoBehaviour
         _moveAction = _playerInput.actions["Move"];
         _jumpAction = _playerInput.actions["Jump"];
         _runAction = _playerInput.actions["Run"];
-        _rollAction = _playerInput.actions["Roll"]; // Roll için aksiyon
+        _rollAction = _playerInput.actions["Roll"]; 
+        _crouchAction = _playerInput.actions["Crouch"];
     }
 
     void Start()
@@ -82,28 +93,40 @@ public class PlayerController : MonoBehaviour
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _currentHealth = maxHealth;
         _cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
-
         remainingJumps = maxJumps;
         _rb.gravityScale = normalGravityScale;
+        _animator = GetComponent<Animator>();
+        if (_animator == null)
+        {
+            Debug.LogError("Animator bileşeni bulunamadı! Lütfen Player GameObject'inizde Animator olduğundan emin olun.");
+        }
     }
 
     private void Update()
     {
-        if (_isDead) return;
-
-        if (isRolling) return; // Roll sırasında diğer mekanikleri durdur
-
-        HandleMovement();
+        if (_isDead || isRolling) return;
+        
+        if (!isCrouching)
+            HandleMovement();
+        
         HandleJump();
         HandleShoot();
-        HandleRoll(); // Roll kontrolü
+        HandleRoll(); 
+        HandleCrouch();
     }
 
     private void HandleMovement()
     {
-        Vector2 moveInput = _moveAction.ReadValue<Vector2>();
+        // Eğer crouch durumundaysa hareketi durdur
+        if (isCrouching)
+        {
+            _rb.velocity = new Vector2(0, _rb.velocity.y);
+            return;
+        }
+
+        Vector2 moveInput = _playerInput.actions["Move"].ReadValue<Vector2>();
         bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
-        float currentSpeed = _runAction.IsPressed() ? moveSpeed * runSpeedMultiplier : moveSpeed;
+        float currentSpeed = _playerInput.actions["Run"].IsPressed() ? moveSpeed * runSpeedMultiplier : moveSpeed;
 
         _rb.velocity = new Vector2(moveInput.x * currentSpeed, _rb.velocity.y);
 
@@ -112,16 +135,21 @@ public class PlayerController : MonoBehaviour
             _spriteRenderer.flipX = moveInput.x > 0;
         }
 
-        UpdateCinemachineOffset(isMoving);
         _animator.SetBool(IsMoving, isMoving);
     }
 
+
+
     private void HandleJump()
     {
+        // Eğer crouch durumundaysa zıplamayı engelle
+        if (isCrouching) return;
+
         if (_jumpAction.triggered && remainingJumps > 0)
         {
             _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
             remainingJumps--;
+
             _rb.gravityScale = fallingGravityScale;
 
             if (remainingJumps == maxJumps - 1)
@@ -135,6 +163,7 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
 
     private void HandleShoot()
     {
@@ -154,7 +183,36 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(PerformRoll());
         }
     }
+   
+    
+    private void HandleCrouch()
+    {
+        if (_crouchAction.IsPressed() && !isCrouching)
+        {
+            EnterCrouch();
+        }
+        else if (!_crouchAction.IsPressed() && isCrouching)
+        {
+            ExitCrouch();
+        }
+    }
 
+    private void EnterCrouch()
+    {
+        isCrouching = true;
+        _animator.SetBool(IsCrouching, true);
+
+        // Crouch sırasında hareketi durdur (isteğe bağlı)
+        _rb.velocity = Vector2.zero;
+    }
+
+    private void ExitCrouch()
+    {
+        isCrouching = false;
+        _animator.SetBool(IsCrouching, false);
+    }
+
+    
     private IEnumerator PerformRoll()
     {
         isRolling = true;

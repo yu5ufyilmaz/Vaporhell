@@ -138,8 +138,15 @@ MonoBehaviour:
   bulletSpeed: 20
   moveSpeed: 10
   runSpeedMultiplier: 1.5
-  jumpForce: 5
+  fastJumpForce: 15
+  normalGravityScale: 1
+  fallingGravityScale: 5
   maxJumps: 2
+  crouchColliderSize: {x: 1, y: 0.5}
+  normalColliderSize: {x: 1, y: 1}
+  rollSpeed: 15
+  rollDuration: 0.4
+  rollCooldown: 1
   offsetRight: {x: 2, y: 0, z: 0}
   offsetLeft: {x: -2, y: 0, z: 0}
   transitionDuration: 0.5
@@ -232,6 +239,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5992670456530697859}
   - component: {fileID: 8816055576032838229}
+  - component: {fileID: 7810934526880256887}
   m_Layer: 0
   m_Name: Collider
   m_TagString: Untagged
@@ -289,3 +297,48 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: -0.3}
   m_Size: {x: 6.42, y: 14.78}
   m_Direction: 0
+--- !u!61 &7810934526880256887
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8917990078749550423}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: -0.11933231, y: -1.877491}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 5.2460413, y: 11.461683}
+  m_EdgeRadius: 0
