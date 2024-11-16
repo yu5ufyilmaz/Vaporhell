@@ -689,7 +689,7 @@ GameObject:
   - component: {fileID: 1440930673}
   - component: {fileID: 1440930676}
   - component: {fileID: 1440930678}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tilemap
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -4029,6 +4029,8 @@ Tilemap:
     m_Data: {fileID: 11400000, guid: 93a5e66f938c3d74bb473a1927fe4d4d, type: 2}
   - m_RefCount: 194
     m_Data: {fileID: 11400000, guid: b01d861f39343cb438e9a23ddacb223b, type: 2}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   m_TileSpriteArray:
   - m_RefCount: 52
     m_Data: {fileID: -184994039, guid: 4e6100b5f252bdd4c80fa27d52cf6e4e, type: 3}
@@ -4038,6 +4040,8 @@ Tilemap:
     m_Data: {fileID: -907409178, guid: 4e6100b5f252bdd4c80fa27d52cf6e4e, type: 3}
   - m_RefCount: 194
     m_Data: {fileID: -881499039, guid: 4e6100b5f252bdd4c80fa27d52cf6e4e, type: 3}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   m_TileMatrixArray:
   - m_RefCount: 325
     m_Data:
@@ -4064,7 +4068,7 @@ Tilemap:
   m_AnimationFrameRate: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -36, y: -22, z: 0}
-  m_Size: {x: 98, y: 22, z: 1}
+  m_Size: {x: 98, y: 26, z: 1}
   m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
