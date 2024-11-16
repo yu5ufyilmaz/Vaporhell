@@ -26,7 +26,9 @@ public class PlayerController : MonoBehaviour
     [Header("Movement Parameters")]
     [SerializeField] private float moveSpeed = 10f;
     [SerializeField] private float runSpeedMultiplier = 1.5f;
-    [SerializeField] private float jumpForce = 3f;
+    [SerializeField] private float fastJumpForce = 8f; // Daha güçlü zıplama
+    [SerializeField] private float normalGravityScale = 1f;
+    [SerializeField] private float fallingGravityScale = 5f; // Daha hızlı düşüş
     [SerializeField] private int maxJumps = 2;
     private int remainingJumps;
     private bool _isGrounded;
@@ -39,17 +41,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float transitionDuration = 0.5f;
     private Vector3 targetOffset;
     private Coroutine offsetTransitionCoroutine;
-
-    [Header("Ledge Climb Parameters")] 
-    [HideInInspector] public bool ledgeDetected;
-    [SerializeField] private Vector2 offset1;
-    [SerializeField] private Vector2 offset2;
-
-    private Vector2 climbBegunPosition;
-    private Vector2 climbOverPosition;
-    
-    private bool canGrabLedge = true;
-    private bool canClimb;
 
     // Components
     private Rigidbody2D _rb;
@@ -82,6 +73,7 @@ public class PlayerController : MonoBehaviour
         _cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
 
         remainingJumps = maxJumps;
+        _rb.gravityScale = normalGravityScale; // Yerçekimi varsayılan ayar
     }
 
     private void Update()
@@ -91,43 +83,7 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleJump();
         HandleShoot();
-        CheckForLedge();
     }
-
-    private void CheckForLedge()
-    {
-        if (ledgeDetected && canGrabLedge)
-        {
-            canGrabLedge = false;
-        
-            Vector2 ledgePosition = GetComponentInChildren<LedgeDetection>().transform.position;
-        
-            climbBegunPosition = ledgePosition + offset1; 
-            climbOverPosition = ledgePosition + offset2;
-
-            // Tırmanma animasyonunu tetikle
-            _animator.SetBool("canClimb",canClimb);
-
-            canClimb = true; // Tırmanmaya izin ver
-        }
-
-        if (canClimb)
-        {
-            transform.position = climbBegunPosition;
-            
-            //StartCoroutine(ClimbCoroutine());
-        }
-    }
-
-    private void LedgeClimbOver()
-    {
-        canClimb = false;
-        transform.position = climbOverPosition;
-        Invoke("LedgeClimbOver", .1f);
-    }
-
-    private void AllowLedgeGrab() => canGrabLedge = true;
-
 
     private void HandleMovement()
     {
@@ -150,11 +106,27 @@ public class PlayerController : MonoBehaviour
     {
         if (_jumpAction.triggered && remainingJumps > 0)
         {
-            _rb.velocity = new Vector2(_rb.velocity.x, jumpForce);
+            // Hızlı zıplama kuvveti uygula
+            _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
             remainingJumps--;
-            _animator.SetBool(IsJumping, true);
+
+            // Zıplama sırasında yerçekimini artır
+            _rb.gravityScale = fallingGravityScale;
+
+            if (remainingJumps == maxJumps - 1)
+            {
+                // İlk zıplamada isJumping true yap
+                _animator.SetBool(IsJumping, true);
+            }
+            else if (remainingJumps < maxJumps - 1)
+            {
+                // İkinci zıplamada animasyonu sıfırla ve tekrar tetikle
+                _animator.SetBool(IsJumping, false);
+                _animator.SetBool(IsJumping, true);
+            }
         }
     }
+
 
     private void HandleShoot()
     {
@@ -206,9 +178,14 @@ public class PlayerController : MonoBehaviour
         {
             _isGrounded = true;
             remainingJumps = maxJumps;
+
+            // Yerçekimini varsayılan hale getir
+            _rb.gravityScale = normalGravityScale;
+
             _animator.SetBool(IsJumping, false);
         }
     }
+
 
     private void OnCollisionExit2D(Collision2D collision)
     {
