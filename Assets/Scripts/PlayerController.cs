@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour
     private static readonly int IsMoving = Animator.StringToHash("isMoving");
     private static readonly int IsJumping = Animator.StringToHash("isJumping");
     private static readonly int DieTrigger = Animator.StringToHash("DieTrigger");
+    private static readonly int RollTrigger = Animator.StringToHash("RollTrigger");
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -26,13 +27,21 @@ public class PlayerController : MonoBehaviour
     [Header("Movement Parameters")]
     [SerializeField] private float moveSpeed = 10f;
     [SerializeField] private float runSpeedMultiplier = 1.5f;
-    [SerializeField] private float fastJumpForce = 8f; // Daha güçlü zıplama
+    [SerializeField] private float fastJumpForce = 8f;
     [SerializeField] private float normalGravityScale = 1f;
-    [SerializeField] private float fallingGravityScale = 5f; // Daha hızlı düşüş
+    [SerializeField] private float fallingGravityScale = 5f;
     [SerializeField] private int maxJumps = 2;
     private int remainingJumps;
     private bool _isGrounded;
     private bool _isDead = false;
+
+    // Roll Parameters
+    [Header("Roll Parameters")]
+    [SerializeField] private float rollSpeed = 15f;
+    [SerializeField] private float rollDuration = 0.4f;
+    [SerializeField] private float rollCooldown = 1f;
+    private bool isRolling = false;
+    private bool canRoll = true;
 
     // Cinemachine Offset Parameters
     [Header("Cinemachine Offset Parameters")]
@@ -54,6 +63,7 @@ public class PlayerController : MonoBehaviour
     private InputAction _moveAction;
     private InputAction _jumpAction;
     private InputAction _runAction;
+    private InputAction _rollAction;
 
     void Awake()
     {
@@ -62,6 +72,7 @@ public class PlayerController : MonoBehaviour
         _moveAction = _playerInput.actions["Move"];
         _jumpAction = _playerInput.actions["Jump"];
         _runAction = _playerInput.actions["Run"];
+        _rollAction = _playerInput.actions["Roll"]; // Roll için aksiyon
     }
 
     void Start()
@@ -73,16 +84,19 @@ public class PlayerController : MonoBehaviour
         _cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
 
         remainingJumps = maxJumps;
-        _rb.gravityScale = normalGravityScale; // Yerçekimi varsayılan ayar
+        _rb.gravityScale = normalGravityScale;
     }
 
     private void Update()
     {
         if (_isDead) return;
 
+        if (isRolling) return; // Roll sırasında diğer mekanikleri durdur
+
         HandleMovement();
         HandleJump();
         HandleShoot();
+        HandleRoll(); // Roll kontrolü
     }
 
     private void HandleMovement()
@@ -106,27 +120,21 @@ public class PlayerController : MonoBehaviour
     {
         if (_jumpAction.triggered && remainingJumps > 0)
         {
-            // Hızlı zıplama kuvveti uygula
             _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
             remainingJumps--;
-
-            // Zıplama sırasında yerçekimini artır
             _rb.gravityScale = fallingGravityScale;
 
             if (remainingJumps == maxJumps - 1)
             {
-                // İlk zıplamada isJumping true yap
                 _animator.SetBool(IsJumping, true);
             }
             else if (remainingJumps < maxJumps - 1)
             {
-                // İkinci zıplamada animasyonu sıfırla ve tekrar tetikle
                 _animator.SetBool(IsJumping, false);
                 _animator.SetBool(IsJumping, true);
             }
         }
     }
-
 
     private void HandleShoot()
     {
@@ -137,6 +145,45 @@ public class PlayerController : MonoBehaviour
             Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
             bulletRb.velocity = shootDirection * bulletSpeed;
         }
+    }
+
+    private void HandleRoll()
+    {
+        if (_rollAction.triggered && canRoll && !isRolling)
+        {
+            StartCoroutine(PerformRoll());
+        }
+    }
+
+    private IEnumerator PerformRoll()
+    {
+        isRolling = true;
+        canRoll = false;
+
+        // Roll animasyonu tetikle
+        _animator.SetTrigger(RollTrigger);
+
+        // Roll yönünü belirle
+        float rollDirection = _spriteRenderer.flipX ? 1f : -1f;
+
+        // Roll sırasında yerçekimini devre dışı bırak
+        _rb.gravityScale = 0;
+
+        // Roll sırasında hız uygula
+        _rb.velocity = new Vector2(rollDirection * rollSpeed, 0);
+
+        // Roll süresi boyunca bekle
+        yield return new WaitForSeconds(rollDuration);
+
+        // Roll tamamlandıktan sonra hareketi sıfırla ve yerçekimini etkinleştir
+        _rb.velocity = Vector2.zero;
+        _rb.gravityScale = normalGravityScale;
+
+        isRolling = false;
+
+        // Cooldown süresi
+        yield return new WaitForSeconds(rollCooldown);
+        canRoll = true;
     }
 
     private void UpdateCinemachineOffset(bool isMoving)
@@ -178,14 +225,10 @@ public class PlayerController : MonoBehaviour
         {
             _isGrounded = true;
             remainingJumps = maxJumps;
-
-            // Yerçekimini varsayılan hale getir
             _rb.gravityScale = normalGravityScale;
-
             _animator.SetBool(IsJumping, false);
         }
     }
-
 
     private void OnCollisionExit2D(Collision2D collision)
     {
@@ -211,11 +254,9 @@ public class PlayerController : MonoBehaviour
 
         _isDead = true;
         _animator.SetTrigger(DieTrigger);
-
         _rb.velocity = Vector2.zero;
         _rb.gravityScale = 0.0f;
         _rb.constraints = RigidbodyConstraints2D.FreezePositionY;
-
         _playerInput.enabled = false;
 
         StartCoroutine(DeathSequence());
