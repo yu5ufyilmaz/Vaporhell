@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
     private static readonly int DieTrigger = Animator.StringToHash("DieTrigger");
     private static readonly int RollTrigger = Animator.StringToHash("RollTrigger");
     private static readonly int IsCrouching = Animator.StringToHash("isCrouching");
+    private static readonly int Shoot = Animator.StringToHash("Shoot");
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -23,6 +24,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Transform firePoint;
     [SerializeField] private float bulletSpeed = 20f;
+    [SerializeField] private float shootCooldown = 0.4f; // Ateş etme cooldown süresi
+    private bool canShoot = true; // Ateş etmeye izin durumu
+    
+    [Header("Fire Point Offsets")]
+    [SerializeField] private Vector2 firePointOffsetRight = new Vector2(1f, 0f); // Sağ bakışta merminin çıkış pozisyonu
+    [SerializeField] private Vector2 firePointOffsetLeft = new Vector2(-1f, 0f); // Sol bakışta merminin çıkış pozisyonu
+
 
     // Movement Parameters
     [Header("Movement Parameters")]
@@ -69,9 +77,7 @@ public class PlayerController : MonoBehaviour
 
     // Input Actions
     private InputAction _shootAction;
-    private InputAction _moveAction;
     private InputAction _jumpAction;
-    private InputAction _runAction;
     private InputAction _rollAction;
     private InputAction _crouchAction; 
 
@@ -79,9 +85,7 @@ public class PlayerController : MonoBehaviour
     {
         _playerInput = GetComponent<PlayerInput>();
         _shootAction = _playerInput.actions["Shoot"];
-        _moveAction = _playerInput.actions["Move"];
         _jumpAction = _playerInput.actions["Jump"];
-        _runAction = _playerInput.actions["Run"];
         _rollAction = _playerInput.actions["Roll"]; 
         _crouchAction = _playerInput.actions["Crouch"];
     }
@@ -105,24 +109,21 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         if (_isDead || isRolling) return;
-        
+
         if (!isCrouching)
             HandleMovement();
-        
+
         HandleJump();
         HandleShoot();
-        HandleRoll(); 
+        HandleRoll();
         HandleCrouch();
+        UpdateFirePointPosition();
     }
+
 
     private void HandleMovement()
     {
-        // Eğer crouch durumundaysa hareketi durdur
-        if (isCrouching)
-        {
-            _rb.velocity = new Vector2(0, _rb.velocity.y);
-            return;
-        }
+        if (_isDead || isRolling || !canShoot) return; // Ateş ederken hareketi durdur
 
         Vector2 moveInput = _playerInput.actions["Move"].ReadValue<Vector2>();
         bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
@@ -138,12 +139,9 @@ public class PlayerController : MonoBehaviour
         _animator.SetBool(IsMoving, isMoving);
     }
 
-
-
     private void HandleJump()
     {
-        // Eğer crouch durumundaysa zıplamayı engelle
-        if (isCrouching) return;
+        if (isCrouching || !canShoot) return; // Ateş ederken zıplamayı engelle
 
         if (_jumpAction.triggered && remainingJumps > 0)
         {
@@ -165,16 +163,55 @@ public class PlayerController : MonoBehaviour
     }
 
 
+
     private void HandleShoot()
     {
-        if (_shootAction.triggered && !_isDead)
+        if (_shootAction.triggered && canShoot && !_isDead)
         {
-            GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-            Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-            Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
-            bulletRb.velocity = shootDirection * bulletSpeed;
+            StartCoroutine(ShootCoroutine());
         }
     }
+    
+    private void UpdateFirePointPosition()
+    {
+        if (_spriteRenderer.flipX)
+        {
+            firePoint.localPosition = firePointOffsetLeft; // Sol tarafa bakarken fire point pozisyonu
+        }
+        else
+        {
+            firePoint.localPosition = firePointOffsetRight; // Sağ tarafa bakarken fire point pozisyonu
+        }
+    }
+
+
+    private IEnumerator ShootCoroutine()
+    {
+        // Ateş etmeye izin verme
+        canShoot = false;
+
+        // Hareketi durdur
+        _rb.velocity = Vector2.zero;
+
+        // Ateş animasyonunu tetikle
+        _animator.SetTrigger(Shoot); // Animator'da "Shoot" trigger'ı tanımladığını varsayıyorum.
+
+        // Ateş etme işlemini gerçekleştirme zamanı
+        yield return new WaitForSeconds(0.4f); // Animasyonun ateş etme anına göre ayarla
+
+        // Mermiyi oluştur ve ateş et
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+        Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
+        bulletRb.velocity = shootDirection * bulletSpeed;
+
+        // Cooldown süresi boyunca bekle
+        yield return new WaitForSeconds(shootCooldown - 0.4f); // Toplam 1 saniyelik cooldown olacak
+
+        // Tekrar ateş etmeye izin ver
+        canShoot = true;
+    }
+
 
     private void HandleRoll()
     {
