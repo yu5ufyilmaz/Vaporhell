@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     private static readonly int RollTrigger = Animator.StringToHash("RollTrigger");
     private static readonly int IsCrouching = Animator.StringToHash("isCrouching");
     private static readonly int Shoot = Animator.StringToHash("Shoot");
+    private static readonly int LedgeClimb = Animator.StringToHash("LedgeClimb");
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -67,6 +68,21 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float transitionDuration = 0.5f;
     private Vector3 targetOffset;
     private Coroutine offsetTransitionCoroutine;
+    
+    [Header("Ledge Climb Settings")]
+    [SerializeField] private Transform ledgeCheck; // Kenar kontrol noktası
+    [SerializeField] private float ledgeCheckRadius = 0.2f; // Kenar kontrol yarıçapı
+    [SerializeField] private LayerMask groundLayer; // Kenarların bulunduğu layer
+    [SerializeField] private Vector2 climbStartOffset = new Vector2(0f, -0.5f); // Tırmanış başlangıç pozisyonu
+    [SerializeField] private Vector2 climbEndOffset = new Vector2(0f, 1.5f); // Tırmanış sonrası pozisyon
+
+
+    private bool isTouchingLedge; // Karakter kenara ulaştı mı?
+    private bool isClimbing; // Karakter tırmanıyor mu?
+    private bool isJumping; // Karakter zıplıyor mu?
+
+
+
 
     // Components
     private Rigidbody2D _rb;
@@ -108,17 +124,27 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (_isDead || isRolling) return;
+        if (_isDead || isRolling || isClimbing) return; // Tırmanış sırasında tüm girdileri devre dışı bırak
 
-        if (!isCrouching)
-            HandleMovement();
+        CheckForLedge();
 
+        if (isTouchingLedge && !isClimbing && isJumping)
+        {
+            StartCoroutine(PerformLedgeClimb());
+        }
+
+        HandleMovement();
         HandleJump();
         HandleShoot();
         HandleRoll();
         HandleCrouch();
         UpdateFirePointPosition();
+        UpdateLedgeCheckPosition();
     }
+
+
+
+
 
 
     private void HandleMovement()
@@ -141,7 +167,7 @@ public class PlayerController : MonoBehaviour
 
     private void HandleJump()
     {
-        if (isCrouching || !canShoot) return; // Ateş ederken zıplamayı engelle
+        if (isClimbing || isCrouching) return;
 
         if (_jumpAction.triggered && remainingJumps > 0)
         {
@@ -149,18 +175,19 @@ public class PlayerController : MonoBehaviour
             remainingJumps--;
 
             _rb.gravityScale = fallingGravityScale;
+            isJumping = true; // Zıplama durumu aktif
+            _animator.SetBool(IsJumping, true);
+        }
 
-            if (remainingJumps == maxJumps - 1)
-            {
-                _animator.SetBool(IsJumping, true);
-            }
-            else if (remainingJumps < maxJumps - 1)
-            {
-                _animator.SetBool(IsJumping, false);
-                _animator.SetBool(IsJumping, true);
-            }
+        if (_isGrounded)
+        {
+            remainingJumps = maxJumps;
+            isJumping = false; // Zıplama sıfırlandı
+            _animator.SetBool(IsJumping, false);
         }
     }
+
+
 
 
 
@@ -183,34 +210,47 @@ public class PlayerController : MonoBehaviour
             firePoint.localPosition = firePointOffsetRight; // Sağ tarafa bakarken fire point pozisyonu
         }
     }
+    
+    private void UpdateLedgeCheckPosition()
+    {
+        if (_spriteRenderer.flipX)
+        {
+            ledgeCheck.localPosition = new Vector2(2f, 4.0f); // Sola bakarken
+        }
+        else
+        {
+            ledgeCheck.localPosition = new Vector2(-5.5f, 4.0f); // Sağa bakarken
+        }
+    }
+
+
 
 
     private IEnumerator ShootCoroutine()
-    {
-        // Ateş etmeye izin verme
-        canShoot = false;
+{
+    canShoot = false;
 
-        // Hareketi durdur
-        _rb.velocity = Vector2.zero;
+    // Hareketi durdur
+    _rb.velocity = Vector2.zero;
 
-        // Ateş animasyonunu tetikle
-        _animator.SetTrigger(Shoot); // Animator'da "Shoot" trigger'ı tanımladığını varsayıyorum.
+    // Ateş animasyonunu tetikle
+    _animator.SetTrigger(Shoot);
 
-        // Ateş etme işlemini gerçekleştirme zamanı
-        yield return new WaitForSeconds(0.4f); // Animasyonun ateş etme anına göre ayarla
+    // Ateş etme işlemini gerçekleştirme zamanı
+    yield return new WaitForSeconds(0.4f);
 
-        // Mermiyi oluştur ve ateş et
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
-        bulletRb.velocity = shootDirection * bulletSpeed;
+    // Mermiyi oluştur ve ateş et
+    GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+    Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+    Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
+    bulletRb.velocity = shootDirection * bulletSpeed;
 
-        // Cooldown süresi boyunca bekle
-        yield return new WaitForSeconds(shootCooldown - 0.4f); // Toplam 1 saniyelik cooldown olacak
+    // Cooldown süresi boyunca bekle
+    yield return new WaitForSeconds(shootCooldown - 0.4f);
 
-        // Tekrar ateş etmeye izin ver
-        canShoot = true;
-    }
+    canShoot = true;
+}
+
 
 
     private void HandleRoll()
@@ -280,6 +320,51 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(rollCooldown);
         canRoll = true;
     }
+
+    private void CheckForLedge()
+    {
+        if (isClimbing || !isJumping) return;
+
+        Collider2D ledgeHit = Physics2D.OverlapCircle(ledgeCheck.position, ledgeCheckRadius, groundLayer);
+
+        if (ledgeHit != null)
+        {
+            isTouchingLedge = true; // Kenar algılandı
+        }
+        else
+        {
+            isTouchingLedge = false; // Kenar yok
+        }
+    }
+
+    
+    private IEnumerator PerformLedgeClimb()
+    {
+        isClimbing = true; // Tırmanış durumunu aktif et
+        isJumping = false; // Zıplama durumunu sıfırla
+
+        // Hareketi durdur
+        _rb.velocity = Vector2.zero;
+        _rb.isKinematic = true;
+
+        // Karakteri başlangıç pozisyonuna hizala
+        Vector3 targetPosition = transform.position + (Vector3)climbStartOffset;
+        transform.position = targetPosition;
+
+        // Tırmanış animasyonunu başlat
+        _animator.SetTrigger(LedgeClimb);
+
+        // Animasyonun tamamlanmasını bekle
+        yield return new WaitForSeconds(1f); // Animasyon süresine göre ayarla
+
+        // Karakteri yukarı taşı
+        transform.position += (Vector3)climbEndOffset;
+
+        // Hareketi tekrar etkinleştir
+        _rb.isKinematic = false;
+        isClimbing = false; // Tırmanış tamamlandı
+    }
+
 
     private void UpdateCinemachineOffset(bool isMoving)
     {
