@@ -215,11 +215,11 @@ public class PlayerController : MonoBehaviour
     {
         if (_spriteRenderer.flipX)
         {
-            ledgeCheck.localPosition = new Vector2(2f, 4.0f); // Sola bakarken
+            ledgeCheck.localPosition = new Vector2(10.5f, 0.2f); // Sola bakarken
         }
         else
         {
-            ledgeCheck.localPosition = new Vector2(-5.5f, 4.0f); // Sağa bakarken
+            ledgeCheck.localPosition = new Vector2(-0.5f, 0.2f); // Sağa bakarken
         }
     }
 
