@@ -18,6 +18,7 @@ public class PlayerController : MonoBehaviour
     [Header("Health Parameters")]
     [SerializeField] private int maxHealth = 100;
     private int _currentHealth;
+    [SerializeField] private HealthBarUI healthBarUI;
 
     // Combat Parameters
     [Header("Combat Parameters")]
@@ -103,6 +104,10 @@ public class PlayerController : MonoBehaviour
         if (_animator == null)
         {
             Debug.LogError("Animator bileşeni bulunamadı! Lütfen Player GameObject'inizde Animator olduğundan emin olun.");
+        }
+        if (healthBarUI != null)
+        {
+            healthBarUI.UpdateHealthBar(_currentHealth, maxHealth);
         }
     }
 
@@ -337,9 +342,32 @@ public class PlayerController : MonoBehaviour
     {
         _currentHealth -= damageAmount;
 
+        // Sağlık barını güncelle
+        if (healthBarUI != null)
+        {
+            healthBarUI.UpdateHealthBar(_currentHealth, maxHealth);
+        }
+
         if (_currentHealth <= 0 && !_isDead)
         {
             Die();
+        }
+    }
+
+    public void Heal(int healAmount)
+    {
+        if (_isDead) return;
+
+        _currentHealth += healAmount;
+        if (_currentHealth > maxHealth)
+        {
+            _currentHealth = maxHealth;
+        }
+
+        // Sağlık barını güncelle
+        if (healthBarUI != null)
+        {
+            healthBarUI.UpdateHealthBar(_currentHealth, maxHealth);
         }
     }
 
@@ -364,14 +392,5 @@ public class PlayerController : MonoBehaviour
         Destroy(gameObject);
     }
 
-    public void Heal(int healAmount)
-    {
-        if (_isDead) return;
-
-        _currentHealth += healAmount;
-        if (_currentHealth > maxHealth)
-        {
-            _currentHealth = maxHealth;
-        }
-    }
+   
 }

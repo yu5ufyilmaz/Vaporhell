@@ -74,8 +74,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -110902175
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 93e10b28fca4aac48b838c01c92f150a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -169,7 +169,8 @@ MonoBehaviour:
   attackRange: 2
   damage: 50
   attackCooldown: 2
-  patrolPoints: []
+  patrolRange: 5
+  minPatrolDistance: 2
   waitTimeAtPatrolPoint: 2
   runSpeedMultiplier: 1.5
 --- !u!95 &-6312883676314535365
