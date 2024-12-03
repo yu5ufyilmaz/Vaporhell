@@ -3,13 +3,18 @@ using System.Collections;
 
 public class BasicMechanorot : EnemyBase
 {
+    private static readonly int IsWalking = Animator.StringToHash("isWalking");
+    private static readonly int Damage1 = Animator.StringToHash("Damage1");
+    private static readonly int Damage2 = Animator.StringToHash("Damage2");
+    private static readonly int Damage = Animator.StringToHash("TakeDamage");
+    private static readonly int IsDead = Animator.StringToHash("isDead");
     public int maxHealth = 100;
     private int currentHealth;
 
     public float moveSpeed = 3f;
     public float detectionRange = 10f;
     public float attackRange = 2f;
-    public int damage = 50;
+    public int damage = 10;
     public float attackCooldown = 2f;
     public float patrolRange = 5f; 
     public float minPatrolDistance = 15f; // Minimum hareket mesafesi
@@ -68,7 +73,7 @@ public class BasicMechanorot : EnemyBase
 
     void MoveTowardsPlayer()
     {
-        animator.SetBool("isWalking", true);
+        animator.SetBool(IsWalking, true);
 
         Vector2 direction = (player.position - transform.position).normalized;
         rb.velocity = new Vector2(direction.x * moveSpeed * runSpeedMultiplier, rb.velocity.y);
@@ -82,12 +87,25 @@ public class BasicMechanorot : EnemyBase
             transform.localScale = new Vector3(0.14f, transform.localScale.y, transform.localScale.z);
         }
     }
+    
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Player"))
+        {
+            PlayerController playerController = collision.GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                playerController.TakeDamage(damage); // Oyuncuya hasar ver
+            }
+        }
+    }
+
 
     void Patrol()
     {
         if (isWaiting) return;
 
-        animator.SetBool("isWalking", true);
+        animator.SetBool(IsWalking, true);
 
         Vector2 direction = (patrolTarget - (Vector2)transform.position).normalized;
         rb.velocity = new Vector2(direction.x * moveSpeed, rb.velocity.y);
@@ -111,7 +129,7 @@ public class BasicMechanorot : EnemyBase
     {
         isWaiting = true;
         rb.velocity = Vector2.zero;
-        animator.SetBool("isWalking", false);
+        animator.SetBool(IsWalking, false);
 
         yield return new WaitForSeconds(waitTimeAtPatrolPoint);
 
@@ -134,7 +152,7 @@ public class BasicMechanorot : EnemyBase
     void Idle()
     {
         rb.velocity = Vector2.zero;
-        animator.SetBool("isWalking", false);
+        animator.SetBool(IsWalking, false);
     }
 
     IEnumerator AttackPlayer()
@@ -142,27 +160,42 @@ public class BasicMechanorot : EnemyBase
         isAttacking = true;
         rb.velocity = Vector2.zero;
 
+        // Rastgele bir saldırı animasyonu oynat
         int randomAttackAnimation = Random.Range(0, 2);
         if (randomAttackAnimation == 0)
         {
-            animator.SetTrigger("Damage1");
+            animator.SetTrigger(Damage1);
         }
         else
         {
-            animator.SetTrigger("Damage2");
+            animator.SetTrigger(Damage2);
         }
 
-        yield return new WaitForSeconds(attackCooldown);
+        yield return new WaitForSeconds(0.5f); // Saldırı animasyonunun yarısında hasar verir
 
+        // Oyuncuya hasar ver
+        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+        if (distanceToPlayer <= attackRange)
+        {
+            PlayerController playerController = player.GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                playerController.TakeDamage(damage); // Oyuncunun canını azalt
+            }
+        }
+
+        // Saldırı bekleme süresi
+        yield return new WaitForSeconds(attackCooldown - 0.5f);
         isAttacking = false;
     }
+
 
     public override void TakeDamage(int damageAmount)
     {
         base.TakeDamage(damageAmount);
         currentHealth -= damageAmount;
 
-        animator.SetTrigger("TakeDamage");
+        animator.SetTrigger(Damage);
 
         if (currentHealth <= 0)
         {
@@ -172,7 +205,7 @@ public class BasicMechanorot : EnemyBase
 
     private void Die()
     {
-        animator.SetBool("isDead", true);
+        animator.SetBool(IsDead, true);
         rb.velocity = Vector2.zero;
         isPatrolling = false;
         enabled = false;

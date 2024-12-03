@@ -54,9 +54,9 @@ TagManager:
   - name: Sand
     uniqueID: 3178059943
     locked: 0
-  - name: Tilemap
-    uniqueID: 4184065121
-    locked: 0
   - name: Front
     uniqueID: 89715853
+    locked: 0
+  - name: Tilemap
+    uniqueID: 4184065121
     locked: 0
