@@ -128,7 +128,8 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        if (_isDead || isRolling || !canShoot) return; // Ateş ederken hareketi durdur
+        // Ateş ederken veya yuvarlanırken hareketi durdur
+        if (_isDead || isRolling || !canShoot) return;
 
         Vector2 moveInput = _playerInput.actions["Move"].ReadValue<Vector2>();
         bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
@@ -143,6 +144,16 @@ public class PlayerController : MonoBehaviour
 
         _animator.SetBool(IsMoving, isMoving);
     }
+
+    private void HandleShoot()
+    {
+        // Zıplarken veya ölü durumdayken ateş etmeyi engelle
+        if (_shootAction.triggered && canShoot && !_isDead && _isGrounded && !isRolling && !isCrouching)
+        {
+            StartCoroutine(ShootCoroutine());
+        }
+    }
+
 
     private void HandleJump()
     {
@@ -164,16 +175,6 @@ public class PlayerController : MonoBehaviour
                 _animator.SetBool(IsJumping, false);
                 _animator.SetBool(IsJumping, true);
             }
-        }
-    }
-
-
-
-    private void HandleShoot()
-    {
-        if (_shootAction.triggered && canShoot && !_isDead)
-        {
-            StartCoroutine(ShootCoroutine());
         }
     }
     
@@ -229,15 +230,20 @@ public class PlayerController : MonoBehaviour
     
     private void HandleCrouch()
     {
-        if (_crouchAction.IsPressed() && !isCrouching)
+        // Zıplarken veya ölü durumdayken çömelmeyi engelle
+        if (_isGrounded && !isRolling && !isCrouching && !canShoot && !_animator.GetBool(IsJumping))
         {
-            EnterCrouch();
-        }
-        else if (!_crouchAction.IsPressed() && isCrouching)
-        {
-            ExitCrouch();
+            if (_crouchAction.IsPressed() && !isCrouching)
+            {
+                EnterCrouch();
+            }
+            else if (!_crouchAction.IsPressed() && isCrouching)
+            {
+                ExitCrouch();
+            }
         }
     }
+
 
     private void EnterCrouch()
     {
