@@ -580,7 +580,7 @@ MonoBehaviour:
   m_Follow: {fileID: 308690393}
   m_Lens:
     FieldOfView: 60
-    OrthographicSize: 8.5
+    OrthographicSize: 6.25
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -606,7 +606,7 @@ Transform:
   m_GameObject: {fileID: 700175546}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.911112, y: -1.29, z: -10}
+  m_LocalPosition: {x: 6.5111113, y: -1.29, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -970,7 +970,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 8.5
+  orthographic size: 6.25
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -995,7 +995,7 @@ Transform:
   m_GameObject: {fileID: 804961809}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.911112, y: -1.29, z: -10}
+  m_LocalPosition: {x: 6.5111113, y: -1.29, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -91083,8 +91083,8 @@ GameObject:
   - component: {fileID: 1952366201}
   - component: {fileID: 1952366200}
   m_Layer: 7
-  m_Name: TilemapWall
-  m_TagString: Wall
+  m_Name: Tilemap2
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

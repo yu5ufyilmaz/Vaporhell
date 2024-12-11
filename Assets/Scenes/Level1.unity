@@ -693,7 +693,7 @@ GameObject:
   - component: {fileID: 1324436157}
   m_Layer: 7
   m_Name: TilemapWall
-  m_TagString: Wall
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7418,6 +7418,46 @@ PrefabInstance:
     - target: {fileID: 340583157699582295, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: redXSize
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: redYSize
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: greenXSize
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: greenYSize
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: redXOffset
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: redYOffset
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: greenXOffset
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: greenYOffset
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: groundMask.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: ledgeLayer.m_Bits
+      value: 192
       objectReference: {fileID: 0}
     - target: {fileID: 3226234222647863853, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
       propertyPath: m_Name

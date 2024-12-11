@@ -33,6 +33,23 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Vector2 firePointOffsetLeft = new Vector2(-1f, 0f); // Sol bakışta merminin çıkış pozisyonu
 
 
+    [Header("Ledge Climb Parameters")]
+    private bool isGrabbed; // Kenara tutunduğunu belirten durum
+    [SerializeField] private float redXOffset; // Kenar kontrol kutusu x mesafesi
+    [SerializeField] private float redYOffset; // Kenar kontrol kutusu y mesafesi
+    [SerializeField] private float redXSize, redYSize; // Kenar kontrol kutusu boyutları
+    [SerializeField] private float greenXOffset; // Tutunma kontrol kutusu x mesafesi
+    [SerializeField] private float greenYOffset; // Tutunma kontrol kutusu y mesafesi
+    [SerializeField] private float greenXSize, greenYSize; // Tutunma kontrol kutusu boyutları
+
+    [SerializeField] private LayerMask groundMask; // Kenarların yer aldığı layer mask
+    [SerializeField] private float climbOffsetY = 2f; // Tırmanış sonrası karakterin Y pozisyonu için offset
+    [SerializeField] private float climbDuration = 0.5f; // Tırmanma süresi
+    private bool redBox, greenBox; // Kenar algılama kutuları
+
+    private bool isClimbing = false; // Tırmanış durumu
+    private bool isTouchingWall = false;
+
     // Movement Parameters
     [Header("Movement Parameters")]
     [SerializeField] private float moveSpeed = 10f;
@@ -111,19 +128,94 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Update()
+  private void Update()
+{
+    if (_isDead || isRolling || isClimbing) return;
+
+    // Hareket ve diğer kontroller
+    if (!isCrouching && !isGrabbed)
+        HandleMovement();
+
+    HandleJump();
+    HandleShoot();
+    HandleRoll();
+    HandleCrouch();
+    UpdateFirePointPosition();
+    HandleLedgeGrab(); // Kenar tutunmayı kontrol et
+}
+
+// Kenar tutunmayı kontrol eden fonksiyon
+private void HandleLedgeGrab()
+{
+    if (isClimbing || isGrabbed) return;
+
+    // Kenarın üst kısmını kontrol et
+    greenBox = Physics2D.OverlapBox(new Vector2(
+        transform.position.x + (greenXOffset * transform.localScale.x),
+        transform.position.y + greenYOffset),
+        new Vector2(greenXSize, greenYSize), 0f, groundMask);
+
+    // Kenarın önünü kontrol et
+    redBox = Physics2D.OverlapBox(new Vector2(
+        transform.position.x + (redXOffset * transform.localScale.x),
+        transform.position.y + redYOffset),
+        new Vector2(redXSize, redYSize), 0f, groundMask);
+
+    // Eğer kenar algılandı ve tutunulabilir, ancak çarpışma yok
+    if (greenBox && !redBox)
     {
-        if (_isDead || isRolling) return;
-
-        if (!isCrouching)
-            HandleMovement();
-
-        HandleJump();
-        HandleShoot();
-        HandleRoll();
-        HandleCrouch();
-        UpdateFirePointPosition();
+        isGrabbed = true;
+        _rb.velocity = Vector2.zero; // Hareketi durdur
+        _rb.gravityScale = 0f;       // Yerçekimini devre dışı bırak
+        StartClimbing(new Vector2(
+            transform.position.x + (greenXOffset * transform.localScale.x),
+            transform.position.y + greenYOffset)); // Tırmanış işlemini başlat
     }
+}
+
+// Tırmanmayı başlatan fonksiyon
+private void StartClimbing(Vector2 targetPosition)
+{
+    isClimbing = true;
+    _animator.SetTrigger("Climb"); // Animator'da Climb tetikleyicisini aktif et
+
+    // Tırmanma işlemini başlat
+    Vector3 climbTarget = new Vector3(targetPosition.x, targetPosition.y + climbOffsetY, transform.position.z);
+    StartCoroutine(ClimbCoroutine(climbTarget));
+}
+
+private IEnumerator ClimbCoroutine(Vector3 targetPosition)
+{
+    float elapsed = 0f;
+    Vector3 startPosition = transform.position;
+
+    while (elapsed < climbDuration)
+    {
+        transform.position = Vector3.Lerp(startPosition, targetPosition, elapsed / climbDuration);
+        elapsed += Time.deltaTime;
+        yield return null;
+    }
+
+    transform.position = targetPosition; // Son pozisyonu ayarla
+    FinishClimbing();
+}
+
+private void FinishClimbing()
+{
+    isGrabbed = false;
+    isClimbing = false;
+    _rb.gravityScale = normalGravityScale; // Yerçekimini geri getir
+    _animator.ResetTrigger("Climb"); // Tetikleyiciyi sıfırla
+}
+private void OnDrawGizmosSelected()
+{
+    Gizmos.color = Color.red;
+    Gizmos.DrawWireCube(new Vector2(transform.position.x + (redXOffset * transform.localScale.x), transform.position.y + redYOffset), new Vector2(redXSize, redYSize));
+    Gizmos.color = Color.green;
+    Gizmos.DrawWireCube(new Vector2(transform.position.x + (greenXOffset * transform.localScale.x), transform.position.y + greenYOffset), new Vector2(greenXSize, greenYSize));
+}
+
+
 
 
     private void HandleMovement()
@@ -230,19 +322,25 @@ public class PlayerController : MonoBehaviour
     
     private void HandleCrouch()
     {
-        // Zıplarken veya ölü durumdayken çömelmeyi engelle
-        if (_isGrounded && !isRolling && !isCrouching && !canShoot && !_animator.GetBool(IsJumping))
+        if (!_isGrounded || isRolling || _isDead || _animator.GetBool(IsJumping))
         {
-            if (_crouchAction.IsPressed() && !isCrouching)
+            if (isCrouching)
             {
-                EnterCrouch();
+                ExitCrouch(); 
             }
-            else if (!_crouchAction.IsPressed() && isCrouching)
-            {
-                ExitCrouch();
-            }
+            return; 
+        }
+        
+        if (_crouchAction.IsPressed() && !isCrouching)
+        {
+            EnterCrouch();
+        }
+        else if (!_crouchAction.IsPressed() && isCrouching)
+        {
+            ExitCrouch();
         }
     }
+
 
 
     private void EnterCrouch()
@@ -250,7 +348,6 @@ public class PlayerController : MonoBehaviour
         isCrouching = true;
         _animator.SetBool(IsCrouching, true);
 
-        // Crouch sırasında hareketi durdur (isteğe bağlı)
         _rb.velocity = Vector2.zero;
     }
 
@@ -258,6 +355,7 @@ public class PlayerController : MonoBehaviour
     {
         isCrouching = false;
         _animator.SetBool(IsCrouching, false);
+        
     }
 
     
