@@ -6903,6 +6903,17 @@ CompositeCollider2D:
   m_OffsetDistance: 0.00005
   m_UseDelaunayMesh: 0
   m_CompositeGameObject: {fileID: 1440930671}
+--- !u!114 &1500010073 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3261086905627265429, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
+  m_PrefabInstance: {fileID: 3720837651760858333}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d791ca3306a8564f903554a966a45ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1686534537
 GameObject:
   m_ObjectHideFlags: 0
@@ -7420,56 +7431,36 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
-      propertyPath: redXSize
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
-      propertyPath: redYSize
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
-      propertyPath: greenXSize
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
-      propertyPath: greenYSize
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
       propertyPath: redXOffset
-      value: 4
+      value: 1.25
       objectReference: {fileID: 0}
     - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
-      propertyPath: redYOffset
-      value: 2
-      objectReference: {fileID: 0}
+      propertyPath: healthBarUI
+      value: 
+      objectReference: {fileID: 1500010073}
     - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
       propertyPath: greenXOffset
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
-      propertyPath: greenYOffset
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
-      propertyPath: groundMask.m_Bits
-      value: 64
-      objectReference: {fileID: 0}
-    - target: {fileID: 2501200296817736475, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
-      propertyPath: ledgeLayer.m_Bits
-      value: 192
+      value: 1.25
       objectReference: {fileID: 0}
     - target: {fileID: 3226234222647863853, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 8052004514429362280, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: m_Constraints
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 8816055576032838229, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
       propertyPath: m_Size.x
-      value: 6.41
+      value: 4.2
       objectReference: {fileID: 0}
     - target: {fileID: 8816055576032838229, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
       propertyPath: m_Size.y
-      value: 14.15
+      value: 10.24
+      objectReference: {fileID: 0}
+    - target: {fileID: 8816055576032838229, guid: e343cc38247ee4f44aa659d817920c6f, type: 3}
+      propertyPath: m_Offset.y
+      value: 1.6
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
