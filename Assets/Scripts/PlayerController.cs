@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     private static readonly int RollTrigger = Animator.StringToHash("RollTrigger");
     private static readonly int IsCrouching = Animator.StringToHash("isCrouching");
     private static readonly int Shoot = Animator.StringToHash("Shoot");
+    private static readonly int IsFalling = Animator.StringToHash("isFalling");
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -68,7 +69,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Vector2 normalColliderSize = new Vector2(1f, 1f); // Normal collider boyutu
 
     private bool isCrouching = false;
-
+    private bool isShooting = false;
+    private bool hasJumped = false;
 
     // Roll Parameters
     [Header("Roll Parameters")]
@@ -128,100 +130,146 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-  private void Update()
-{
-    if (_isDead || isRolling || isClimbing) return;
+    private void Update()
+    {
+        if (_isDead || isRolling || isClimbing) return;
 
-    // Hareket ve diğer kontroller
-    if (!isCrouching && !isGrabbed)
-        HandleMovement();
+        // Hareket ve diğer kontroller
+        if (!isCrouching && !isGrabbed)
+            HandleMovement();
 
-    HandleJump();
-    HandleShoot();
-    HandleRoll();
-    HandleCrouch();
-    UpdateFirePointPosition();
-    HandleLedgeGrab(); // Kenar tutunmayı kontrol et
-}
+        HandleJump();
+        HandleShoot();
+        HandleRoll();
+        HandleCrouch();
+        UpdateFirePointPosition();
+        HandleLedgeGrab(); // Kenar tutunmayı kontrol et
+
+        // Düşme durumunu kontrol et
+        HandleFalling();
+        
+        _isGrounded = IsGrounded();
+
+        // Debug için
+        Debug.Log($"isGrounded: {_isGrounded}, velocityY: {_rb.velocity.y}");
+    
+        if (_isGrounded)
+        {
+            _animator.SetBool(IsFalling, false);
+        }
+    }
+    private void HandleFalling()
+    {
+        // Eğer karakter havadaysa ve düşüyorsa (yere değmiyorsa ve hız negatifse)
+        if (!_isGrounded && _rb.velocity.y < -1.5f)
+        {
+            // Düşme animasyonunu başlat
+            if (!_animator.GetBool(IsFalling))
+            {
+                _animator.SetBool(IsFalling, true);
+            }
+        }
+        else if (_isGrounded)
+        {
+            // Yere indiğinde düşme animasyonunu durdur
+            if (_animator.GetBool(IsFalling))
+            {
+                _animator.SetBool(IsFalling, false);
+            }
+        }
+    }
+
+    
+
 
 // Kenar tutunmayı kontrol eden fonksiyon
-private void HandleLedgeGrab()
-{
-    if (isClimbing || isGrabbed) return;
-
-    // Kenarın üst kısmını kontrol et
-    greenBox = Physics2D.OverlapBox(new Vector2(
-        transform.position.x + (greenXOffset * transform.localScale.x),
-        transform.position.y + greenYOffset),
-        new Vector2(greenXSize, greenYSize), 0f, groundMask);
-
-    // Kenarın önünü kontrol et
-    redBox = Physics2D.OverlapBox(new Vector2(
-        transform.position.x + (redXOffset * transform.localScale.x),
-        transform.position.y + redYOffset),
-        new Vector2(redXSize, redYSize), 0f, groundMask);
-
-    // Eğer kenar algılandı ve tutunulabilir, ancak çarpışma yok
-    if (greenBox && !redBox)
+    private void HandleLedgeGrab()
     {
-        isGrabbed = true;
-        _rb.velocity = Vector2.zero; // Hareketi durdur
-        _rb.gravityScale = 0f;       // Yerçekimini devre dışı bırak
-        StartClimbing(new Vector2(
-            transform.position.x + (greenXOffset * transform.localScale.x),
-            transform.position.y + greenYOffset)); // Tırmanış işlemini başlat
+        if (isClimbing || isGrabbed || !hasJumped) return; // Eğer zıplama yapılmadıysa veya zaten tutunmuşsa işlem yapma
+
+        // Kenarın üst kısmını kontrol et
+        greenBox = Physics2D.OverlapBox(new Vector2(
+                transform.position.x + (greenXOffset * transform.localScale.x),
+                transform.position.y + greenYOffset),
+            new Vector2(greenXSize, greenYSize), 0f, groundMask);
+
+        // Kenarın önünü kontrol et
+        redBox = Physics2D.OverlapBox(new Vector2(
+                transform.position.x + (redXOffset * transform.localScale.x),
+                transform.position.y + redYOffset),
+            new Vector2(redXSize, redYSize), 0f, groundMask);
+
+        // Eğer kenar algılandı ve tutunulabilir, ancak çarpışma yok
+        if (greenBox && !redBox)
+        {
+            isGrabbed = true;
+            _rb.velocity = Vector2.zero; // Hareketi durdur
+            _rb.gravityScale = 0f;       // Yerçekimini devre dışı bırak
+            StartClimbing(new Vector2(
+                transform.position.x + (greenXOffset * transform.localScale.x),
+                transform.position.y + greenYOffset)); // Tırmanış işlemini başlat
+        }
     }
-}
+
+    
 
 // Tırmanmayı başlatan fonksiyon
-private void StartClimbing(Vector2 targetPosition)
-{
-    isClimbing = true;
-    _animator.SetTrigger("Climb"); // Animator'da Climb tetikleyicisini aktif et
-
-    // Tırmanma işlemini başlat
-    Vector3 climbTarget = new Vector3(targetPosition.x, targetPosition.y + climbOffsetY, transform.position.z);
-    StartCoroutine(ClimbCoroutine(climbTarget));
-}
-
-private IEnumerator ClimbCoroutine(Vector3 targetPosition)
-{
-    float elapsed = 0f;
-    Vector3 startPosition = transform.position;
-
-    while (elapsed < climbDuration)
+    private void StartClimbing(Vector2 targetPosition)
     {
-        transform.position = Vector3.Lerp(startPosition, targetPosition, elapsed / climbDuration);
-        elapsed += Time.deltaTime;
-        yield return null;
+        isClimbing = true;
+        _rb.velocity = Vector2.zero; // Hareketi durdur
+        _rb.gravityScale = 0f;       // Yerçekimini devre dışı bırak
+        _animator.SetTrigger("Climb"); // Tırmanma animasyonunu tetikleyin
+
+        // Tırmanma işlemini başlat
+        StartCoroutine(ClimbCoroutine(targetPosition));
     }
 
-    transform.position = targetPosition; // Son pozisyonu ayarla
-    FinishClimbing();
-}
+    private IEnumerator ClimbCoroutine(Vector2 targetPosition)
+    {
+        // Tırmanma animasyonu süresince bekle (örneğin, 1 saniye)
+        float climbAnimationDuration = 0.23f; // Tırmanma animasyonunun süresi
+        yield return new WaitForSeconds(climbAnimationDuration);
 
-private void FinishClimbing()
-{
-    isGrabbed = false;
-    isClimbing = false;
-    _rb.gravityScale = normalGravityScale; // Yerçekimini geri getir
-    _animator.ResetTrigger("Climb"); // Tetikleyiciyi sıfırla
-}
-private void OnDrawGizmosSelected()
-{
-    Gizmos.color = Color.red;
-    Gizmos.DrawWireCube(new Vector2(transform.position.x + (redXOffset * transform.localScale.x), transform.position.y + redYOffset), new Vector2(redXSize, redYSize));
-    Gizmos.color = Color.green;
-    Gizmos.DrawWireCube(new Vector2(transform.position.x + (greenXOffset * transform.localScale.x), transform.position.y + greenYOffset), new Vector2(greenXSize, greenYSize));
-}
+        // Karakteri tırmanış sonrası yerine yerleştirin
+        transform.position = new Vector3(targetPosition.x, targetPosition.y + climbOffsetY, transform.position.z);
 
+        // Tırmanma işlemini sonlandırın
+        FinishClimbing();
+    }
 
+    private void FinishClimbing()
+    {
+        isClimbing = false;
+        isGrabbed = false;
+        _rb.gravityScale = normalGravityScale; // Yerçekimini geri getir
+        _animator.ResetTrigger("Climb"); // Tetikleyiciyi sıfırla
+    }
 
+    private void OnDrawGizmosSelected()
+    {
+        if (!Application.isPlaying) return;
+
+        float directionMultiplier = _spriteRenderer.flipX ? 1f : -1f;
+
+        // Red Box çizimi
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(new Vector2(
+                transform.position.x + (redXOffset * directionMultiplier),
+                transform.position.y + redYOffset),
+            new Vector2(redXSize, redYSize));
+
+        // Green Box çizimi
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(new Vector2(
+                transform.position.x + (greenXOffset * directionMultiplier),
+                transform.position.y + greenYOffset),
+            new Vector2(greenXSize, greenYSize));
+    }
 
     private void HandleMovement()
     {
-        // Ateş ederken veya yuvarlanırken hareketi durdur
-        if (_isDead || isRolling || !canShoot) return;
+        if (_isDead || isRolling || !canShoot || isShooting) return; // Hareketi durdur
 
         Vector2 moveInput = _playerInput.actions["Move"].ReadValue<Vector2>();
         bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
@@ -235,26 +283,62 @@ private void OnDrawGizmosSelected()
         }
 
         _animator.SetBool(IsMoving, isMoving);
+
+        // Cinemachine offset'i güncelle
+        UpdateCinemachineOffset(isMoving);
     }
+
+
 
     private void HandleShoot()
     {
-        // Zıplarken veya ölü durumdayken ateş etmeyi engelle
-        if (_shootAction.triggered && canShoot && !_isDead && _isGrounded && !isRolling && !isCrouching)
+        // Ateş etme, hareket veya diğer eylemleri durdurur
+        if (_shootAction.triggered && canShoot && !_isDead && _isGrounded && !isRolling && !isCrouching && !isShooting)
         {
             StartCoroutine(ShootCoroutine());
         }
     }
 
+    private IEnumerator ShootCoroutine()
+    {
+        isShooting = true; // Ateş etme sırasında diğer eylemleri engelle
+        canShoot = false;  // Cooldown süresi boyunca tekrar ateş edilmesin
+
+        _rb.velocity = Vector2.zero; // Hareketi durdur
+        _animator.SetTrigger(Shoot); // Ateş animasyonunu tetikle
+
+        // Animasyonun tamamlanma süresi kadar bekle
+        float shootAnimationDuration = 1f; // Ateş animasyonu süresi
+        yield return new WaitForSeconds(shootAnimationDuration);
+
+        // Mermiyi oluştur ve ateş et
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+        Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
+        bulletRb.velocity = shootDirection * bulletSpeed;
+
+        // Cooldown süresi boyunca bekle
+        float remainingCooldown = shootCooldown - shootAnimationDuration; // Eğer cooldown animasyon süresinden fazlaysa
+        if (remainingCooldown > 0f)
+        {
+            yield return new WaitForSeconds(remainingCooldown);
+        }
+
+        // Ateş etmeye ve hareket etmeye izin ver
+        isShooting = false;
+        canShoot = true;
+    }
+
 
     private void HandleJump()
     {
-        if (isCrouching || !canShoot) return; // Ateş ederken zıplamayı engelle
+        if (isCrouching || !canShoot || isShooting) return; // Ateş ederken veya zıplamaya uygun değilse engelle
 
         if (_jumpAction.triggered && remainingJumps > 0)
         {
             _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
             remainingJumps--;
+            hasJumped = true; // Zıplama gerçekleştirildiği için işaretle
 
             _rb.gravityScale = fallingGravityScale;
 
@@ -269,6 +353,7 @@ private void OnDrawGizmosSelected()
             }
         }
     }
+
     
     private void UpdateFirePointPosition()
     {
@@ -281,36 +366,7 @@ private void OnDrawGizmosSelected()
             firePoint.localPosition = firePointOffsetRight; // Sağ tarafa bakarken fire point pozisyonu
         }
     }
-
-
-    private IEnumerator ShootCoroutine()
-    {
-        // Ateş etmeye izin verme
-        canShoot = false;
-
-        // Hareketi durdur
-        _rb.velocity = Vector2.zero;
-
-        // Ateş animasyonunu tetikle
-        _animator.SetTrigger(Shoot); // Animator'da "Shoot" trigger'ı tanımladığını varsayıyorum.
-
-        // Ateş etme işlemini gerçekleştirme zamanı
-        yield return new WaitForSeconds(0.4f); // Animasyonun ateş etme anına göre ayarla
-
-        // Mermiyi oluştur ve ateş et
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
-        bulletRb.velocity = shootDirection * bulletSpeed;
-
-        // Cooldown süresi boyunca bekle
-        yield return new WaitForSeconds(shootCooldown - 0.4f); // Toplam 1 saniyelik cooldown olacak
-
-        // Tekrar ateş etmeye izin ver
-        canShoot = true;
-    }
-
-
+    
     private void HandleRoll()
     {
         if (_rollAction.triggered && canRoll && !isRolling)
@@ -429,18 +485,45 @@ private void OnDrawGizmosSelected()
         {
             _isGrounded = true;
             remainingJumps = maxJumps;
+            hasJumped = false;
             _rb.gravityScale = normalGravityScale;
+
+            // Animasyonları sıfırla
+            _animator.SetBool(IsFalling, false);
             _animator.SetBool(IsJumping, false);
+        }
+        
+        Debug.Log($"Collision Enter with: {collision.gameObject.name}");
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            _isGrounded = true;
+            Debug.Log("isGrounded set to TRUE");
         }
     }
 
     private void OnCollisionExit2D(Collision2D collision)
     {
+        Debug.Log($"Collision Exit with: {collision.gameObject.name}");
         if (collision.gameObject.CompareTag("Ground"))
         {
             _isGrounded = false;
+            Debug.Log("isGrounded set to FALSE");
         }
     }
+
+    private bool IsGrounded()
+    {
+        float extraHeight = 0.1f; // Raycast uzunluğu
+        Vector2 raycastOrigin = new Vector2(transform.position.x, transform.position.y - 0.5f); // Collider'ın altı
+        RaycastHit2D hit = Physics2D.Raycast(raycastOrigin, Vector2.down, extraHeight, groundMask);
+
+        // Debug için ray çizgisi
+        Debug.DrawRay(raycastOrigin, Vector2.down * extraHeight, Color.red);
+
+        // Raycast zemine çarparsa
+        return hit.collider != null;
+    }
+
 
     public void TakeDamage(int damageAmount)
     {
