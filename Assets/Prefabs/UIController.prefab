@@ -444,7 +444,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d791ca3306a8564f903554a966a45ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  foregroundImage: {fileID: 8579143969488026749}
+  healthFillImage: {fileID: 8579143969488026749}
   updateSpeed: 0.2
 --- !u!1 &1587468830700897147
 GameObject:
@@ -1133,7 +1133,6 @@ GameObject:
   - component: {fileID: 8500416641386528559}
   - component: {fileID: 1033119962067388000}
   - component: {fileID: 8360187835422655458}
-  - component: {fileID: 8397784590269473568}
   m_Layer: 5
   m_Name: HealthBack
   m_TagString: Untagged
@@ -1198,18 +1197,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8397784590269473568
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2453214241352374204}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d80d1e6060d52a5459f471c53c6cfe97, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2460930878707343567
 GameObject:
   m_ObjectHideFlags: 0
@@ -1544,10 +1531,10 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: a602674d331ab9c4b9712ebb7535abb9, type: 3}
-  m_Type: 0
+  m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
-  m_FillMethod: 4
+  m_FillMethod: 0
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0

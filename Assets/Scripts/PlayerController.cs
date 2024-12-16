@@ -369,24 +369,30 @@ public class PlayerController : MonoBehaviour
     
     private void HandleRoll()
     {
+        // Eğer havadaysa veya ölü durumda roll yapılmasın
+        if (!_isGrounded || _isDead || Mathf.Abs(_rb.velocity.y) > 0.1f) return;
+
+        // Roll girişini kontrol et
         if (_rollAction.triggered && canRoll && !isRolling)
         {
             StartCoroutine(PerformRoll());
         }
     }
+
    
-    
     private void HandleCrouch()
     {
-        if (!_isGrounded || isRolling || _isDead || _animator.GetBool(IsJumping))
+        // Eğer havadaysa veya hareket eden roll veya ölüm durumundaysa crouch'u iptal et
+        if (!_isGrounded || isRolling || _isDead || Mathf.Abs(_rb.velocity.y) > 0.1f)
         {
             if (isCrouching)
             {
-                ExitCrouch(); 
+                ExitCrouch(); // Eğilme durumundan çık
             }
-            return; 
+            return; // İşlemden çık
         }
-        
+
+        // Crouch girişini kontrol et
         if (_crouchAction.IsPressed() && !isCrouching)
         {
             EnterCrouch();
@@ -396,6 +402,8 @@ public class PlayerController : MonoBehaviour
             ExitCrouch();
         }
     }
+
+
 
 
 
@@ -513,33 +521,34 @@ public class PlayerController : MonoBehaviour
 
     private bool IsGrounded()
     {
-        float extraHeight = 0.1f; // Raycast uzunluğu
-        Vector2 raycastOrigin = new Vector2(transform.position.x, transform.position.y - 0.5f); // Collider'ın altı
+        float extraHeight = 0.5f; 
+        Vector2 raycastOrigin = new Vector2(transform.position.x, transform.position.y - 0.5f); // Alt kısımdan başla
         RaycastHit2D hit = Physics2D.Raycast(raycastOrigin, Vector2.down, extraHeight, groundMask);
 
-        // Debug için ray çizgisi
-        Debug.DrawRay(raycastOrigin, Vector2.down * extraHeight, Color.red);
+        // Debug için ray'ı çiz
+        Debug.DrawRay(raycastOrigin, Vector2.down * extraHeight, Color.green);
 
-        // Raycast zemine çarparsa
         return hit.collider != null;
     }
 
 
     public void TakeDamage(int damageAmount)
     {
+        if (_isDead) return;
+
         _currentHealth -= damageAmount;
 
-        // Sağlık barını güncelle
         if (healthBarUI != null)
         {
-            healthBarUI.UpdateHealthBar(_currentHealth, maxHealth);
+            healthBarUI.UpdateHealthBar(_currentHealth, maxHealth); // Sağlık Bar'ı güncelle
         }
 
-        if (_currentHealth <= 0 && !_isDead)
+        if (_currentHealth <= 0)
         {
             Die();
         }
     }
+
 
     public void Heal(int healAmount)
     {

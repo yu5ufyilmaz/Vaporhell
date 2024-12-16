@@ -140,11 +140,11 @@ MonoBehaviour:
   shootCooldown: 0.4
   firePointOffsetRight: {x: -12.4, y: 3.59}
   firePointOffsetLeft: {x: 11.32, y: 3.59}
-  redXOffset: 4
+  redXOffset: 1.25
   redYOffset: 2
   redXSize: 1
   redYSize: 1
-  greenXOffset: 4
+  greenXOffset: 1.25
   greenYOffset: 0.36
   greenXSize: 1
   greenYSize: 1
@@ -311,8 +311,8 @@ CapsuleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: -0.57}
-  m_Size: {x: 6.41, y: 14.15}
+  m_Offset: {x: 0, y: 1.6}
+  m_Size: {x: 4.2, y: 10.24}
   m_Direction: 0
 --- !u!61 &7810934526880256887
 BoxCollider2D:

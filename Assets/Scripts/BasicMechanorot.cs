@@ -3,24 +3,34 @@ using System.Collections;
 
 public class BasicMechanorot : EnemyBase
 {
+    // Animation Hashes
     private static readonly int IsWalking = Animator.StringToHash("isWalking");
     private static readonly int Damage1 = Animator.StringToHash("Damage1");
     private static readonly int Damage2 = Animator.StringToHash("Damage2");
     private static readonly int Damage = Animator.StringToHash("TakeDamage");
     private static readonly int IsDead = Animator.StringToHash("isDead");
+
+    // Health Parameters
+    [Header("Health Parameters")]
     public int maxHealth = 100;
     private int currentHealth;
 
+    // Movement & Combat Parameters
+    [Header("Combat Parameters")]
     public float moveSpeed = 3f;
     public float detectionRange = 10f;
     public float attackRange = 2f;
     public int damage = 10;
     public float attackCooldown = 2f;
-    public float patrolRange = 5f; 
-    public float minPatrolDistance = 15f; // Minimum hareket mesafesi
-    public float waitTimeAtPatrolPoint = 2f; 
+
+    // Patrol Parameters
+    [Header("Patrol Parameters")]
+    public float patrolRange = 5f;
+    public float minPatrolDistance = 1.5f; // Minimum hareket mesafesi
+    public float waitTimeAtPatrolPoint = 2f;
     public float runSpeedMultiplier = 1.5f;
 
+    // Internal State
     private Transform player;
     private Rigidbody2D rb;
     private Animator animator;
@@ -32,21 +42,24 @@ public class BasicMechanorot : EnemyBase
 
     void Start()
     {
+        // Oyuncuyu ve gerekli bileşenleri bul
         player = GameObject.FindGameObjectWithTag("Player").transform;
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         currentHealth = maxHealth;
 
+        // Patrol başlangıç pozisyonunu ayarla
         patrolStartPosition = transform.position;
         SetNewPatrolTarget();
     }
 
     void Update()
     {
-        if (player == null) return;
+        if (player == null || currentHealth <= 0) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
+        // Durum kontrolleri
         if (currentHealth <= 0)
         {
             Die();
@@ -67,7 +80,7 @@ public class BasicMechanorot : EnemyBase
         }
         else
         {
-            Idle(); // Hiçbir koşul sağlanmıyorsa Idle durumuna geç
+            Idle();
         }
     }
 
@@ -87,7 +100,7 @@ public class BasicMechanorot : EnemyBase
             transform.localScale = new Vector3(0.14f, transform.localScale.y, transform.localScale.z);
         }
     }
-    
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
@@ -99,7 +112,6 @@ public class BasicMechanorot : EnemyBase
             }
         }
     }
-
 
     void Patrol()
     {
@@ -171,7 +183,7 @@ public class BasicMechanorot : EnemyBase
             animator.SetTrigger(Damage2);
         }
 
-        yield return new WaitForSeconds(0.5f); // Saldırı animasyonunun yarısında hasar verir
+        yield return new WaitForSeconds(0.5f); // Saldırı animasyonunun yarısında hasar ver
 
         // Oyuncuya hasar ver
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
@@ -181,10 +193,10 @@ public class BasicMechanorot : EnemyBase
             if (playerController != null)
             {
                 playerController.TakeDamage(damage); // Oyuncunun canını azalt
+                Debug.Log($"Player took {damage} damage from BasicMechanorot.");
             }
         }
 
-        // Saldırı bekleme süresi
         yield return new WaitForSeconds(attackCooldown - 0.5f);
         isAttacking = false;
     }
@@ -202,12 +214,14 @@ public class BasicMechanorot : EnemyBase
             Die();
         }
     }
+    
 
     private void Die()
     {
         animator.SetBool(IsDead, true);
         rb.velocity = Vector2.zero;
         isPatrolling = false;
+        rb.constraints = RigidbodyConstraints2D.FreezeAll;
         enabled = false;
     }
 }
