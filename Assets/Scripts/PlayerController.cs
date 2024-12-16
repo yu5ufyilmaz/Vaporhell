@@ -18,7 +18,7 @@ public class PlayerController : MonoBehaviour
     // Health Parameters
     [Header("Health Parameters")]
     [SerializeField] private int maxHealth = 100;
-    private int _currentHealth;
+    private int currentHealth;
     [SerializeField] private HealthBarUI healthBarUI;
 
     // Combat Parameters
@@ -63,6 +63,9 @@ public class PlayerController : MonoBehaviour
     private bool _isGrounded;
     private bool _isDead = false;
     
+    [Header("Ground Check Parameters")]
+    [SerializeField] private Transform groundCheck; // Ground Check objesi
+    [SerializeField] private float groundCheckRadius = 0.2f; // Ground Check yarıçapı
     // Crouch Parameters
     [Header("Crouch Parameters")]
     [SerializeField] private Vector2 crouchColliderSize = new Vector2(1f, 0.5f); // Crouch sırasında collider boyutu
@@ -91,42 +94,42 @@ public class PlayerController : MonoBehaviour
     // Components
     private Rigidbody2D _rb;
     private SpriteRenderer _spriteRenderer;
-    private Animator _animator;
-    private PlayerInput _playerInput;
-    private CinemachineVirtualCamera _cinemachineVirtualCamera;
+    private Animator animator;
+    private PlayerInput playerInput;
+    private CinemachineVirtualCamera cinemachineVirtualCamera;
 
     // Input Actions
-    private InputAction _shootAction;
-    private InputAction _jumpAction;
-    private InputAction _rollAction;
-    private InputAction _crouchAction; 
+    private InputAction shootAction;
+    private InputAction jumpAction;
+    private InputAction rollAction;
+    private InputAction crouchAction; 
 
     void Awake()
     {
-        _playerInput = GetComponent<PlayerInput>();
-        _shootAction = _playerInput.actions["Shoot"];
-        _jumpAction = _playerInput.actions["Jump"];
-        _rollAction = _playerInput.actions["Roll"]; 
-        _crouchAction = _playerInput.actions["Crouch"];
+        playerInput = GetComponent<PlayerInput>();
+        shootAction = playerInput.actions["Shoot"];
+        jumpAction = playerInput.actions["Jump"];
+        rollAction = playerInput.actions["Roll"]; 
+        crouchAction = playerInput.actions["Crouch"];
     }
 
     void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
-        _animator = GetComponent<Animator>();
+        animator = GetComponent<Animator>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
-        _currentHealth = maxHealth;
-        _cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
+        currentHealth = maxHealth;
+        cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
         remainingJumps = maxJumps;
         _rb.gravityScale = normalGravityScale;
-        _animator = GetComponent<Animator>();
-        if (_animator == null)
+        animator = GetComponent<Animator>();
+        if (animator == null)
         {
             Debug.LogError("Animator bileşeni bulunamadı! Lütfen Player GameObject'inizde Animator olduğundan emin olun.");
         }
         if (healthBarUI != null)
         {
-            healthBarUI.UpdateHealthBar(_currentHealth, maxHealth);
+            healthBarUI.UpdateHealthBar(currentHealth, maxHealth);
         }
     }
 
@@ -155,7 +158,7 @@ public class PlayerController : MonoBehaviour
     
         if (_isGrounded)
         {
-            _animator.SetBool(IsFalling, false);
+            animator.SetBool(IsFalling, false);
         }
     }
     private void HandleFalling()
@@ -164,116 +167,122 @@ public class PlayerController : MonoBehaviour
         if (!_isGrounded && _rb.velocity.y < -1.5f)
         {
             // Düşme animasyonunu başlat
-            if (!_animator.GetBool(IsFalling))
+            if (!animator.GetBool(IsFalling))
             {
-                _animator.SetBool(IsFalling, true);
+                animator.SetBool(IsFalling, true);
             }
         }
         else if (_isGrounded)
         {
             // Yere indiğinde düşme animasyonunu durdur
-            if (_animator.GetBool(IsFalling))
+            if (animator.GetBool(IsFalling))
             {
-                _animator.SetBool(IsFalling, false);
+                animator.SetBool(IsFalling, false);
             }
         }
     }
 
-    
+private void HandleLedgeGrab()
+{
+    if (isClimbing || isGrabbed) return; // Eğer zıplama yapılmadıysa veya zaten tutunmuşsa işlem yapma
 
+    // Karakterin yüz yönünü kontrol et
+    float directionMultiplier = _spriteRenderer.flipX ? 1f : -1f;
 
-// Kenar tutunmayı kontrol eden fonksiyon
-    private void HandleLedgeGrab()
+    // Kenarın üst kısmını kontrol et (yeşil kutu)
+    greenBox = Physics2D.OverlapBox(new Vector2(
+            transform.position.x + (greenXOffset * directionMultiplier),
+            transform.position.y + greenYOffset),
+        new Vector2(greenXSize, greenYSize), 0f, groundMask);
+
+    // Kenarın önünü kontrol et (kırmızı kutu)
+    redBox = Physics2D.OverlapBox(new Vector2(
+            transform.position.x + (redXOffset * directionMultiplier),
+            transform.position.y + redYOffset),
+        new Vector2(redXSize, redYSize), 0f, groundMask);
+
+    // Eğer kenar algılandı ve tutunulabilir, ancak çarpışma yok
+    if (greenBox && !redBox)
     {
-        if (isClimbing || isGrabbed || !hasJumped) return; // Eğer zıplama yapılmadıysa veya zaten tutunmuşsa işlem yapma
-
-        // Kenarın üst kısmını kontrol et
-        greenBox = Physics2D.OverlapBox(new Vector2(
-                transform.position.x + (greenXOffset * transform.localScale.x),
-                transform.position.y + greenYOffset),
-            new Vector2(greenXSize, greenYSize), 0f, groundMask);
-
-        // Kenarın önünü kontrol et
-        redBox = Physics2D.OverlapBox(new Vector2(
-                transform.position.x + (redXOffset * transform.localScale.x),
-                transform.position.y + redYOffset),
-            new Vector2(redXSize, redYSize), 0f, groundMask);
-
-        // Eğer kenar algılandı ve tutunulabilir, ancak çarpışma yok
-        if (greenBox && !redBox)
-        {
-            isGrabbed = true;
-            _rb.velocity = Vector2.zero; // Hareketi durdur
-            _rb.gravityScale = 0f;       // Yerçekimini devre dışı bırak
-            StartClimbing(new Vector2(
-                transform.position.x + (greenXOffset * transform.localScale.x),
-                transform.position.y + greenYOffset)); // Tırmanış işlemini başlat
-        }
-    }
-
-    
-
-// Tırmanmayı başlatan fonksiyon
-    private void StartClimbing(Vector2 targetPosition)
-    {
-        isClimbing = true;
+        isGrabbed = true;
         _rb.velocity = Vector2.zero; // Hareketi durdur
         _rb.gravityScale = 0f;       // Yerçekimini devre dışı bırak
-        _animator.SetTrigger("Climb"); // Tırmanma animasyonunu tetikleyin
 
-        // Tırmanma işlemini başlat
-        StartCoroutine(ClimbCoroutine(targetPosition));
+        // Tırmanış işlemini başlat
+        StartClimbing(new Vector2(
+            transform.position.x + (greenXOffset * directionMultiplier),
+            transform.position.y + greenYOffset));
     }
+}
 
-    private IEnumerator ClimbCoroutine(Vector2 targetPosition)
+private void StartClimbing(Vector2 targetPosition)
+{
+    isClimbing = true;
+    _rb.velocity = Vector2.zero; // Hareketi durdur
+    _rb.gravityScale = 0f;       // Yerçekimini devre dışı bırak
+    animator.SetTrigger("Climb"); // Tırmanma animasyonunu tetikleyin
+
+    // Tırmanma işlemini başlat
+    StartCoroutine(ClimbCoroutine(targetPosition));
+}
+
+private IEnumerator ClimbCoroutine(Vector2 targetPosition)
+{
+    // Tırmanma animasyonu süresince bekle (örneğin, 1 saniye)
+    float climbAnimationDuration = 0.3f; // Tırmanma animasyonunun süresi
+    yield return new WaitForSeconds(climbAnimationDuration);
+
+    // Karakteri tırmanış sonrası yerine yerleştirin
+    transform.position = new Vector3(targetPosition.x, targetPosition.y + climbOffsetY, transform.position.z);
+
+    // Tırmanma işlemini sonlandırın
+    FinishClimbing();
+}
+
+private void FinishClimbing()
+{
+    isClimbing = false;
+    isGrabbed = false;
+    _rb.gravityScale = normalGravityScale; // Yerçekimini geri getir
+    animator.ResetTrigger("Climb"); // Tetikleyiciyi sıfırla
+}
+
+
+private void OnDrawGizmosSelected()
+{
+    if (!Application.isPlaying) return;
+
+    float directionMultiplier = _spriteRenderer.flipX ? 1f : -1f;
+
+    // Red Box çizimi
+    Gizmos.color = Color.red;
+    Gizmos.DrawWireCube(new Vector2(
+            transform.position.x + (redXOffset * directionMultiplier),
+            transform.position.y + redYOffset),
+        new Vector2(redXSize, redYSize));
+
+    // Green Box çizimi
+    Gizmos.color = Color.green;
+    Gizmos.DrawWireCube(new Vector2(
+            transform.position.x + (greenXOffset * directionMultiplier),
+            transform.position.y + greenYOffset),
+        new Vector2(greenXSize, greenYSize));
+    
+    if (groundCheck != null)
     {
-        // Tırmanma animasyonu süresince bekle (örneğin, 1 saniye)
-        float climbAnimationDuration = 0.23f; // Tırmanma animasyonunun süresi
-        yield return new WaitForSeconds(climbAnimationDuration);
-
-        // Karakteri tırmanış sonrası yerine yerleştirin
-        transform.position = new Vector3(targetPosition.x, targetPosition.y + climbOffsetY, transform.position.z);
-
-        // Tırmanma işlemini sonlandırın
-        FinishClimbing();
-    }
-
-    private void FinishClimbing()
-    {
-        isClimbing = false;
-        isGrabbed = false;
-        _rb.gravityScale = normalGravityScale; // Yerçekimini geri getir
-        _animator.ResetTrigger("Climb"); // Tetikleyiciyi sıfırla
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (!Application.isPlaying) return;
-
-        float directionMultiplier = _spriteRenderer.flipX ? 1f : -1f;
-
-        // Red Box çizimi
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(new Vector2(
-                transform.position.x + (redXOffset * directionMultiplier),
-                transform.position.y + redYOffset),
-            new Vector2(redXSize, redYSize));
-
-        // Green Box çizimi
         Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(new Vector2(
-                transform.position.x + (greenXOffset * directionMultiplier),
-                transform.position.y + greenYOffset),
-            new Vector2(greenXSize, greenYSize));
+        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
     }
+}
+
 
     private void HandleMovement()
     {
         if (_isDead || isRolling || !canShoot || isShooting) return; // Hareketi durdur
 
-        Vector2 moveInput = _playerInput.actions["Move"].ReadValue<Vector2>();
+        Vector2 moveInput = playerInput.actions["Move"].ReadValue<Vector2>();
         bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
-        float currentSpeed = _playerInput.actions["Run"].IsPressed() ? moveSpeed * runSpeedMultiplier : moveSpeed;
+        float currentSpeed = playerInput.actions["Run"].IsPressed() ? moveSpeed * runSpeedMultiplier : moveSpeed;
 
         _rb.velocity = new Vector2(moveInput.x * currentSpeed, _rb.velocity.y);
 
@@ -282,7 +291,7 @@ public class PlayerController : MonoBehaviour
             _spriteRenderer.flipX = moveInput.x > 0;
         }
 
-        _animator.SetBool(IsMoving, isMoving);
+        animator.SetBool(IsMoving, isMoving);
 
         // Cinemachine offset'i güncelle
         UpdateCinemachineOffset(isMoving);
@@ -293,7 +302,7 @@ public class PlayerController : MonoBehaviour
     private void HandleShoot()
     {
         // Ateş etme, hareket veya diğer eylemleri durdurur
-        if (_shootAction.triggered && canShoot && !_isDead && _isGrounded && !isRolling && !isCrouching && !isShooting)
+        if (shootAction.triggered && canShoot && !_isDead && _isGrounded && !isRolling && !isCrouching && !isShooting)
         {
             StartCoroutine(ShootCoroutine());
         }
@@ -305,10 +314,10 @@ public class PlayerController : MonoBehaviour
         canShoot = false;  // Cooldown süresi boyunca tekrar ateş edilmesin
 
         _rb.velocity = Vector2.zero; // Hareketi durdur
-        _animator.SetTrigger(Shoot); // Ateş animasyonunu tetikle
+        animator.SetTrigger(Shoot); // Ateş animasyonunu tetikle
 
         // Animasyonun tamamlanma süresi kadar bekle
-        float shootAnimationDuration = 1f; // Ateş animasyonu süresi
+        float shootAnimationDuration = 0.5f; // Ateş animasyonu süresi
         yield return new WaitForSeconds(shootAnimationDuration);
 
         // Mermiyi oluştur ve ateş et
@@ -334,7 +343,7 @@ public class PlayerController : MonoBehaviour
     {
         if (isCrouching || !canShoot || isShooting) return; // Ateş ederken veya zıplamaya uygun değilse engelle
 
-        if (_jumpAction.triggered && remainingJumps > 0)
+        if (jumpAction.triggered && remainingJumps > 0)
         {
             _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
             remainingJumps--;
@@ -344,12 +353,12 @@ public class PlayerController : MonoBehaviour
 
             if (remainingJumps == maxJumps - 1)
             {
-                _animator.SetBool(IsJumping, true);
+                animator.SetBool(IsJumping, true);
             }
             else if (remainingJumps < maxJumps - 1)
             {
-                _animator.SetBool(IsJumping, false);
-                _animator.SetBool(IsJumping, true);
+                animator.SetBool(IsJumping, false);
+                animator.SetBool(IsJumping, true);
             }
         }
     }
@@ -373,7 +382,7 @@ public class PlayerController : MonoBehaviour
         if (!_isGrounded || _isDead || Mathf.Abs(_rb.velocity.y) > 0.1f) return;
 
         // Roll girişini kontrol et
-        if (_rollAction.triggered && canRoll && !isRolling)
+        if (rollAction.triggered && canRoll && !isRolling)
         {
             StartCoroutine(PerformRoll());
         }
@@ -393,11 +402,11 @@ public class PlayerController : MonoBehaviour
         }
 
         // Crouch girişini kontrol et
-        if (_crouchAction.IsPressed() && !isCrouching)
+        if (crouchAction.IsPressed() && !isCrouching)
         {
             EnterCrouch();
         }
-        else if (!_crouchAction.IsPressed() && isCrouching)
+        else if (!crouchAction.IsPressed() && isCrouching)
         {
             ExitCrouch();
         }
@@ -410,7 +419,7 @@ public class PlayerController : MonoBehaviour
     private void EnterCrouch()
     {
         isCrouching = true;
-        _animator.SetBool(IsCrouching, true);
+        animator.SetBool(IsCrouching, true);
 
         _rb.velocity = Vector2.zero;
     }
@@ -418,7 +427,7 @@ public class PlayerController : MonoBehaviour
     private void ExitCrouch()
     {
         isCrouching = false;
-        _animator.SetBool(IsCrouching, false);
+        animator.SetBool(IsCrouching, false);
         
     }
 
@@ -429,7 +438,7 @@ public class PlayerController : MonoBehaviour
         canRoll = false;
 
         // Roll animasyonu tetikle
-        _animator.SetTrigger(RollTrigger);
+        animator.SetTrigger(RollTrigger);
 
         // Roll yönünü belirle
         float rollDirection = _spriteRenderer.flipX ? 1f : -1f;
@@ -473,7 +482,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator SmoothTransitionToOffset(Vector3 targetOffset, float duration)
     {
-        var framingTransposer = _cinemachineVirtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>();
+        var framingTransposer = cinemachineVirtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>();
         Vector3 initialOffset = framingTransposer.m_TrackedObjectOffset;
         float elapsed = 0f;
 
@@ -497,8 +506,8 @@ public class PlayerController : MonoBehaviour
             _rb.gravityScale = normalGravityScale;
 
             // Animasyonları sıfırla
-            _animator.SetBool(IsFalling, false);
-            _animator.SetBool(IsJumping, false);
+            animator.SetBool(IsFalling, false);
+            animator.SetBool(IsJumping, false);
         }
         
         Debug.Log($"Collision Enter with: {collision.gameObject.name}");
@@ -521,29 +530,24 @@ public class PlayerController : MonoBehaviour
 
     private bool IsGrounded()
     {
-        float extraHeight = 0.5f; 
-        Vector2 raycastOrigin = new Vector2(transform.position.x, transform.position.y - 0.5f); // Alt kısımdan başla
-        RaycastHit2D hit = Physics2D.Raycast(raycastOrigin, Vector2.down, extraHeight, groundMask);
-
-        // Debug için ray'ı çiz
-        Debug.DrawRay(raycastOrigin, Vector2.down * extraHeight, Color.green);
-
-        return hit.collider != null;
+        // Ground Check pozisyonunda bir çember kontrolü yap
+        return Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundMask) != null;
     }
 
 
-    public void TakeDamage(int damageAmount)
+    public void TakeDamage(int damageAmount) 
+    
     {
         if (_isDead) return;
 
-        _currentHealth -= damageAmount;
+        currentHealth -= damageAmount;
 
         if (healthBarUI != null)
         {
-            healthBarUI.UpdateHealthBar(_currentHealth, maxHealth); // Sağlık Bar'ı güncelle
+            healthBarUI.UpdateHealthBar(currentHealth, maxHealth); // Sağlık Bar'ı güncelle
         }
 
-        if (_currentHealth <= 0)
+        if (currentHealth <= 0)
         {
             Die();
         }
@@ -554,16 +558,16 @@ public class PlayerController : MonoBehaviour
     {
         if (_isDead) return;
 
-        _currentHealth += healAmount;
-        if (_currentHealth > maxHealth)
+        currentHealth += healAmount;
+        if (currentHealth > maxHealth)
         {
-            _currentHealth = maxHealth;
+            currentHealth = maxHealth;
         }
 
         // Sağlık barını güncelle
         if (healthBarUI != null)
         {
-            healthBarUI.UpdateHealthBar(_currentHealth, maxHealth);
+            healthBarUI.UpdateHealthBar(currentHealth, maxHealth);
         }
     }
 
@@ -572,11 +576,11 @@ public class PlayerController : MonoBehaviour
         if (_isDead) return;
 
         _isDead = true;
-        _animator.SetTrigger(DieTrigger);
+        animator.SetTrigger(DieTrigger);
         _rb.velocity = Vector2.zero;
         _rb.gravityScale = 0.0f;
         _rb.constraints = RigidbodyConstraints2D.FreezePositionY;
-        _playerInput.enabled = false;
+        playerInput.enabled = false;
 
         StartCoroutine(DeathSequence());
     }
