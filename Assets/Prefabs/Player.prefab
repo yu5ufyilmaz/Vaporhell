@@ -36,6 +36,7 @@ Transform:
   m_Children:
   - {fileID: 4352069656108537848}
   - {fileID: 5992670456530697859}
+  - {fileID: 2901655322494882859}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &5799302951226325102
@@ -140,18 +141,18 @@ MonoBehaviour:
   shootCooldown: 0.4
   firePointOffsetRight: {x: -12.4, y: 3.59}
   firePointOffsetLeft: {x: 11.32, y: 3.59}
-  redXOffset: 1.25
-  redYOffset: 2
-  redXSize: 1
-  redYSize: 1
-  greenXOffset: 1.25
-  greenYOffset: 0.36
-  greenXSize: 1
-  greenYSize: 1
+  redXOffset: 0.6
+  redYOffset: 1.25
+  redXSize: 0.25
+  redYSize: 0.25
+  greenXOffset: 0.6
+  greenYOffset: 0
+  greenXSize: 0.25
+  greenYSize: 0.25
   groundMask:
     serializedVersion: 2
     m_Bits: 64
-  climbOffsetY: 2
+  climbOffsetY: 3
   climbDuration: 0.5
   moveSpeed: 10
   runSpeedMultiplier: 1.5
@@ -159,6 +160,8 @@ MonoBehaviour:
   normalGravityScale: 1
   fallingGravityScale: 5
   maxJumps: 2
+  groundCheck: {fileID: 2901655322494882859}
+  groundCheckRadius: 0.2
   crouchColliderSize: {x: 1, y: 0.5}
   normalColliderSize: {x: 1, y: 1}
   rollSpeed: 15
@@ -215,6 +218,37 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &5072574194056669959
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2901655322494882859}
+  m_Layer: 8
+  m_Name: GroundCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2901655322494882859
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5072574194056669959}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -7.64, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 340583157699582295}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5088347713168092626
 GameObject:
   m_ObjectHideFlags: 0
@@ -240,7 +274,7 @@ Transform:
   m_GameObject: {fileID: 5088347713168092626}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -12.4, y: 3.59, z: 0}
+  m_LocalPosition: {x: -10.88, y: 4.17, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
