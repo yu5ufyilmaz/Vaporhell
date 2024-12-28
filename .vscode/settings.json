@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Vaporhell.sln"
+    "dotnet.defaultSolution": "Vaporhell.sln",
+    "FSharp.suggestGitignore": false
 }
