@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 3185508140030358344}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.056, y: 0.497, z: 0}
+  m_LocalPosition: {x: 0.58, y: 0.39, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -56,7 +56,7 @@ Transform:
   m_GameObject: {fileID: 5446610659664748139}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.194, y: -1.2, z: 0}
+  m_LocalPosition: {x: -0.196, y: -1.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -75,7 +75,7 @@ GameObject:
   - component: {fileID: 3318324776937541846}
   - component: {fileID: 7223074696764074738}
   - component: {fileID: 3909857186165236196}
-  - component: {fileID: 3996925868486404416}
+  - component: {fileID: 7545254239171397075}
   m_Layer: 0
   m_Name: MechaBomb
   m_TagString: Untagged
@@ -166,15 +166,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   grenadePrefab: {fileID: 2557039937821784451, guid: e8cb918cbc911f1459c6d4468b3e0e6e, type: 3}
   firePoint: {fileID: 6395371907683168198}
-  grenadeSpeed: 5
-  shootCooldown: 2
+  shootCooldown: 3
+  detectionRange: 20
+  grenadeSpeed: 10
+  arcHeight: 2
   patrolSpeed: 2
-  detectionRange: 10
+  groundCheck: {fileID: 4652246547878329100}
+  groundCheckDistance: 0.5
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  groundCheck: {fileID: 4652246547878329100}
-  groundCheckDistance: 0.5
 --- !u!95 &7223074696764074738
 Animator:
   serializedVersion: 5
@@ -223,8 +224,8 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!70 &3996925868486404416
-CapsuleCollider2D:
+--- !u!61 &7545254239171397075
+BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -255,6 +256,16 @@ CapsuleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.21756777, y: -0.2185863}
-  m_Size: {x: 1.7483909, y: 1.9805393}
-  m_Direction: 0
+  m_Offset: {x: -0.37918776, y: -0.23779559}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 2.9296875, y: 2.9296875}
+    newSize: {x: 1, y: 2}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1.5286204, y: 1.9399428}
+  m_EdgeRadius: 0

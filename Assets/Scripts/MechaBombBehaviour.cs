@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class MechaBombBehavior : MonoBehaviour
 {
+    private static readonly int isWalking = Animator.StringToHash("isWalking");
+    private static readonly int Shoot = Animator.StringToHash("Shoot");
+
     [Header("Grenade Parameters")]
     public GameObject grenadePrefab; // Patlayıcı prefabı
     public Transform firePoint; // Bombanın çıkış noktası
@@ -13,7 +16,7 @@ public class MechaBombBehavior : MonoBehaviour
     [Header("Patrol Parameters")]
     public float patrolSpeed = 2f; // Devriye hızı
     public Transform groundCheck; // Zemin kontrol noktası
-    public float groundCheckDistance = 1f; // Zemin kontrol mesafesi
+    public float groundCheckDistance = 2f; // Zemin kontrol mesafesi
     public LayerMask groundLayer; // Zemin katmanı
 
     private GameObject player; // Oyuncu referansı
@@ -27,6 +30,7 @@ public class MechaBombBehavior : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player");
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        Debug.Log("MechaBomb initialized. Player found: " + (player != null));
     }
 
     void Update()
@@ -45,30 +49,41 @@ public class MechaBombBehavior : MonoBehaviour
     bool PlayerInRange()
     {
         if (player == null) return false;
-        return Vector2.Distance(transform.position, player.transform.position) <= detectionRange;
+        bool inRange = Vector2.Distance(transform.position, player.transform.position) <= detectionRange;
+        Debug.Log("Player in range: " + inRange);
+        return inRange;
     }
 
-    // Oyuncuya bomba at
     void HandleShooting()
     {
-        animator.SetBool("isWalking", false);
+        animator.SetBool(isWalking, false);
+
+        if ((player.transform.position.x > transform.position.x && !spriteRenderer.flipX) ||
+            (player.transform.position.x < transform.position.x && spriteRenderer.flipX))
+        {
+            Flip();
+        }
 
         if (Time.time > lastShootTime + shootCooldown)
         {
-            animator.SetTrigger("shoot");
-            ThrowGrenade();
+            animator.SetTrigger(Shoot);
             lastShootTime = Time.time;
+            Debug.Log("Shooting animation triggered at: " + Time.time);
         }
     }
+
+
+
 
     // Devriye hareketi
     void PatrolPlatform()
     {
-        animator.SetBool("isWalking", true);
+        animator.SetBool(isWalking, true);
 
         if (!IsGrounded())
         {
             Flip();
+            Debug.Log("Platform end reached. Flipping direction.");
         }
 
         transform.Translate((movingRight ? Vector2.right : Vector2.left) * patrolSpeed * Time.deltaTime);
@@ -79,73 +94,103 @@ public class MechaBombBehavior : MonoBehaviour
     {
         if (player == null) return;
 
+        // Bombanın hedef pozisyonunu belirle (oyuncunun altındaki zemini bul)
+        Vector2 targetPosition = GetGroundPositionUnderPlayer();
+
         // Bombayı oluştur
         GameObject grenade = Instantiate(grenadePrefab, firePoint.position, Quaternion.identity);
-        StartCoroutine(MoveGrenadeInArc(grenade, player.transform.position));
+
+        // Bombayı hedef pozisyonuna hareket ettir
+        StartCoroutine(MoveGrenadeInArc(grenade, targetPosition));
+
+        Debug.Log("Grenade thrown towards: " + targetPosition);
     }
 
-    // Bombayı yay çizerek hedefe taşı
-    System.Collections.IEnumerator MoveGrenadeInArc(GameObject grenade, Vector2 targetPosition)
-    {
-        Vector2 startPosition = grenade.transform.position;
-        float elapsedTime = 0f;
-        float duration = Vector2.Distance(startPosition, targetPosition) / grenadeSpeed; // Hareket süresi
 
-        while (elapsedTime < duration)
+Vector2 GetGroundPositionUnderPlayer()
+{
+    // Oyuncunun pozisyonunun biraz altından başlayarak raycast yap
+    Vector2 raycastOrigin = new Vector2(player.transform.position.x, player.transform.position.y - 0.1f);
+    RaycastHit2D hit = Physics2D.Raycast(raycastOrigin, Vector2.down, 10f, groundLayer);
+
+    if (hit.collider != null)
+    {
+        return hit.point; // Ground pozisyonu
+    }
+
+    // Eğer zemin bulunamazsa oyuncunun mevcut pozisyonunu hedefle
+    Debug.LogWarning("No ground detected under player. Defaulting to player's position.");
+    return player.transform.position;
+}
+
+System.Collections.IEnumerator MoveGrenadeInArc(GameObject grenade, Vector2 targetPosition)
+{
+    Vector2 startPosition = grenade.transform.position;
+    float elapsedTime = 0f;
+    float duration = Vector2.Distance(startPosition, targetPosition) / grenadeSpeed;
+
+    while (elapsedTime < duration)
+    {
+        if (grenade == null) yield break;
+
+        elapsedTime += Time.deltaTime;
+        float progress = elapsedTime / duration;
+
+        // X ekseni: Doğrusal hareket
+        float x = Mathf.Lerp(startPosition.x, targetPosition.x, progress);
+
+        // Y ekseni: Yay yüksekliği
+        float y = Mathf.Lerp(startPosition.y, targetPosition.y, progress) + arcHeight * Mathf.Sin(progress * Mathf.PI);
+
+        grenade.transform.position = new Vector2(x, y);
+        yield return null;
+    }
+
+    if (grenade != null)
+    {
+        grenade.transform.position = targetPosition;
+
+        // Grenade scriptine inişi bildir
+        Grenade grenadeScript = grenade.GetComponent<Grenade>();
+        if (grenadeScript != null)
         {
-            if (grenade == null) yield break; // Eğer bomba yok edilmişse Coroutine'i sonlandır
-
-            elapsedTime += Time.deltaTime;
-            float progress = elapsedTime / duration;
-
-            // X ekseni: Doğrusal hareket
-            float x = Mathf.Lerp(startPosition.x, targetPosition.x, progress);
-
-            // Y ekseni: Yay yüksekliğini sinus eğrisi ile ayarla
-            float y = Mathf.Lerp(startPosition.y, targetPosition.y, progress) + arcHeight * Mathf.Sin(progress * Mathf.PI);
-
-            // Bombanın konumunu güncelle
-            if (grenade != null) // Tekrar kontrol
-            {
-                grenade.transform.position = new Vector2(x, y);
-            }
-
-            yield return null;
-        }
-
-        if (grenade != null) // Tekrar kontrol
-        {
-            grenade.transform.position = targetPosition;
-            Explode(grenade);
+            grenadeScript.OnLand();
         }
     }
-
-    void Explode(GameObject grenade)
-    {
-        // Buraya patlama efekti ve hasar verme sistemi ekleyebilirsiniz
-        Destroy(grenade);
-    }
+}
 
 
-    // Yönü değiştir ve firePoint'i çevir
-    void Flip()
-    {
-        movingRight = !movingRight;
-        spriteRenderer.flipX = !spriteRenderer.flipX;
+void Flip()
+{
+    // Hareket yönünü değiştir
+    movingRight = !movingRight;
 
-        Vector3 firePointPosition = firePoint.localPosition;
-        firePointPosition.x *= -1;
-        firePoint.localPosition = firePointPosition;
-    }
+    // Sprite'ı çevir
+    spriteRenderer.flipX = !spriteRenderer.flipX;
 
-    // Zemin kontrolü
+    // Fire Point'in konumunu çevir
+    Vector3 firePointPosition = firePoint.localPosition;
+    firePointPosition.x = -firePointPosition.x; // X eksenini tersine çevir
+    firePoint.localPosition = firePointPosition;
+
+    Debug.Log("Flip triggered. FirePoint position: " + firePoint.localPosition);
+}
+
+
+
     bool IsGrounded()
     {
-        Vector2 origin = groundCheck.position;
-        Vector2 direction = Vector2.down;
-        RaycastHit2D hit = Physics2D.Raycast(origin, direction, groundCheckDistance, groundLayer);
+        Vector2 originLeft = groundCheck.position + Vector3.left * 0.2f;
+        Vector2 originRight = groundCheck.position + Vector3.right * 0.2f;
 
-        Debug.DrawRay(origin, direction * groundCheckDistance, Color.red);
-        return hit.collider != null;
+        bool groundedLeft = Physics2D.Raycast(originLeft, Vector2.down, groundCheckDistance, groundLayer);
+        bool groundedRight = Physics2D.Raycast(originRight, Vector2.down, groundCheckDistance, groundLayer);
+
+        Debug.DrawRay(originLeft, Vector2.down * groundCheckDistance, Color.red);
+        Debug.DrawRay(originRight, Vector2.down * groundCheckDistance, Color.red);
+
+        return groundedLeft || groundedRight;
     }
+
+
 }

@@ -2,18 +2,25 @@ using UnityEngine;
 
 public class Grenade : MonoBehaviour
 {
-    public int damage = 20; // Merminin vereceği hasar
+    public int damage = 20; // Patlamanın vereceği hasar
     public float explosionRadius = 1.5f; // Patlama yarıçapı
-    public LayerMask playerLayer; // Hangi layer'daki objelere hasar vereceği
-
+    public LayerMask damageableLayers; // Hasar verilebilir katmanlar
     public GameObject explosionEffect; // Patlama efekti prefabı
+    public float explosionDelay = 1f; // Yere çarptıktan sonra patlama gecikmesi
 
-    void OnCollisionEnter2D(Collision2D collision)
+    private bool hasLanded = false;
+
+    public void OnLand()
     {
-        Explode();
+        if (hasLanded) return;
+
+        hasLanded = true;
+
+        // Patlamayı gecikmeli olarak tetikle
+        Invoke(nameof(Explode), explosionDelay);
     }
 
-    void Explode()
+    private void Explode()
     {
         // Patlama efekti oluştur
         if (explosionEffect != null)
@@ -21,24 +28,27 @@ public class Grenade : MonoBehaviour
             Instantiate(explosionEffect, transform.position, Quaternion.identity);
         }
 
-        // Patlama yarıçapındaki oyuncuyu bul
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius, playerLayer);
-
+        // Patlama alanındaki objelere hasar ver
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius, damageableLayers);
         foreach (Collider2D hit in hits)
         {
             if (hit.CompareTag("Player"))
             {
-                // Oyuncuya hasar ver
-                hit.GetComponent<PlayerController>().TakeDamage(damage);
+                PlayerController playerController = hit.GetComponent<PlayerController>();
+                if (playerController != null)
+                {
+                    playerController.TakeDamage(damage);
+                }
             }
         }
 
-        // Mermiyi yok et
+        // Bombayı yok et
         Destroy(gameObject);
     }
 
-    void OnDrawGizmosSelected()
+    private void OnDrawGizmosSelected()
     {
+        // Patlama alanını görsel olarak göster
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, explosionRadius);
     }

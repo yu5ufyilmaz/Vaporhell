@@ -8,9 +8,12 @@ public class Parallax : MonoBehaviour
     public GameObject cam;
     public float parallaxEffectX;
 
+    private float startY; // Y eksenini sabitlemek için başlangıç pozisyonu
+
     void Start()
     {
         startpos = transform.position.x;
+        startY = transform.position.y; // Y eksenindeki başlangıç pozisyonunu kaydediyoruz
         length = GetComponent<SpriteRenderer>().bounds.size.x;
     }
 
@@ -21,7 +24,7 @@ public class Parallax : MonoBehaviour
         float dist = (cam.transform.position.x * parallaxEffectX);
 
         // Update position
-        transform.position = new Vector3(startpos + dist, cam.transform.position.y, transform.position.z);
+        transform.position = new Vector3(startpos + dist, startY, transform.position.z);
 
         // Infinite scrolling logic for X-axis
         if (temp > startpos + length) startpos += length;
