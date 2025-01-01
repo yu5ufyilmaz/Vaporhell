@@ -1043,7 +1043,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ea65b5a45f048e4ea980cbd96e2d9be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minimapSmallUI: {fileID: 0}
+  minimapSmallUI: {fileID: 4364882775234134347}
   minimapLargeUI: {fileID: 8217509172615754376}
   pauseMenuUI: {fileID: 7264829899882612591}
   optionsPanel: {fileID: 1127427354756067178}

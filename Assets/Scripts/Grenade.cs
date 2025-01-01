@@ -8,13 +8,32 @@ public class Grenade : MonoBehaviour
     public GameObject explosionEffect; // Patlama efekti prefabı
     public float explosionDelay = 1f; // Yere çarptıktan sonra patlama gecikmesi
 
-    private bool hasLanded = false;
+    private Rigidbody2D rb; // Rigidbody2D bileşeni
+    private bool hasLanded = false; // Bomba yere çarptı mı?
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>(); // Rigidbody2D bileşenini al
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        // Yere çarpma kontrolü (Zemin katmanına çarpıyorsa)
+        if (collision.gameObject.CompareTag("Ground") && !hasLanded)
+        {
+            OnLand(); // Yere çarptığında işlemi başlat
+        }
+    }
 
     public void OnLand()
     {
-        if (hasLanded) return;
+        if (hasLanded) return; // Zaten yere çarpmışsa işlem yapma
 
         hasLanded = true;
+
+        // Rigidbody'yi durdur ve hareketi devre dışı bırak
+        rb.velocity = Vector2.zero; // Hareketi durdur
+        rb.bodyType = RigidbodyType2D.Static; // Statik yaparak sabitle
 
         // Patlamayı gecikmeli olarak tetikle
         Invoke(nameof(Explode), explosionDelay);
@@ -32,12 +51,20 @@ public class Grenade : MonoBehaviour
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius, damageableLayers);
         foreach (Collider2D hit in hits)
         {
-            if (hit.CompareTag("Player"))
+            Debug.Log($"Hit object: {hit.name} (Tag: {hit.tag})");
+
+            if (hit.CompareTag("Player")) // Oyuncu Collider'ı mı?
             {
-                PlayerController playerController = hit.GetComponent<PlayerController>();
+                // Ana objeden PlayerController'ı bul
+                PlayerController playerController = hit.GetComponentInParent<PlayerController>();
                 if (playerController != null)
                 {
-                    playerController.TakeDamage(damage);
+                    playerController.TakeDamage(damage); // Oyuncuya hasar ver
+                    Debug.Log("Player took damage: " + damage);
+                }
+                else
+                {
+                    Debug.LogWarning($"PlayerController not found on parent of: {hit.name}");
                 }
             }
         }
@@ -45,6 +72,7 @@ public class Grenade : MonoBehaviour
         // Bombayı yok et
         Destroy(gameObject);
     }
+
 
     private void OnDrawGizmosSelected()
     {

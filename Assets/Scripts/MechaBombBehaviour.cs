@@ -1,6 +1,7 @@
 using UnityEngine;
+using System.Collections;
 
-public class MechaBombBehavior : MonoBehaviour
+public class MechaBombBehavior : EnemyBase
 {
     private static readonly int isWalking = Animator.StringToHash("isWalking");
     private static readonly int Shoot = Animator.StringToHash("Shoot");
@@ -27,6 +28,7 @@ public class MechaBombBehavior : MonoBehaviour
 
     void Start()
     {
+        base.health = 70; // EnemyBase'ten gelen sağlık değeri
         player = GameObject.FindGameObjectWithTag("Player");
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -45,13 +47,10 @@ public class MechaBombBehavior : MonoBehaviour
         }
     }
 
-    // Oyuncu menzil içinde mi?
-    bool PlayerInRange()
+    private bool PlayerInRange()
     {
         if (player == null) return false;
-        bool inRange = Vector2.Distance(transform.position, player.transform.position) <= detectionRange;
-        Debug.Log("Player in range: " + inRange);
-        return inRange;
+        return Vector2.Distance(transform.position, player.transform.position) <= detectionRange;
     }
 
     void HandleShooting()
@@ -72,24 +71,18 @@ public class MechaBombBehavior : MonoBehaviour
         }
     }
 
-
-
-
-    // Devriye hareketi
-    void PatrolPlatform()
+    private void PatrolPlatform()
     {
         animator.SetBool(isWalking, true);
 
         if (!IsGrounded())
         {
             Flip();
-            Debug.Log("Platform end reached. Flipping direction.");
         }
 
         transform.Translate((movingRight ? Vector2.right : Vector2.left) * patrolSpeed * Time.deltaTime);
     }
 
-    // Bomba atışı
     void ThrowGrenade()
     {
         if (player == null) return;
@@ -107,78 +100,75 @@ public class MechaBombBehavior : MonoBehaviour
     }
 
 
-Vector2 GetGroundPositionUnderPlayer()
-{
-    // Oyuncunun pozisyonunun biraz altından başlayarak raycast yap
-    Vector2 raycastOrigin = new Vector2(player.transform.position.x, player.transform.position.y - 0.1f);
-    RaycastHit2D hit = Physics2D.Raycast(raycastOrigin, Vector2.down, 10f, groundLayer);
 
-    if (hit.collider != null)
+    private Vector2 GetGroundPositionUnderPlayer()
     {
-        return hit.point; // Ground pozisyonu
-    }
+        Vector2 raycastOrigin = new Vector2(player.transform.position.x, player.transform.position.y - 0.1f);
+        RaycastHit2D hit = Physics2D.Raycast(raycastOrigin, Vector2.down, 10f, groundLayer);
 
-    // Eğer zemin bulunamazsa oyuncunun mevcut pozisyonunu hedefle
-    Debug.LogWarning("No ground detected under player. Defaulting to player's position.");
-    return player.transform.position;
-}
-
-System.Collections.IEnumerator MoveGrenadeInArc(GameObject grenade, Vector2 targetPosition)
-{
-    Vector2 startPosition = grenade.transform.position;
-    float elapsedTime = 0f;
-    float duration = Vector2.Distance(startPosition, targetPosition) / grenadeSpeed;
-
-    while (elapsedTime < duration)
-    {
-        if (grenade == null) yield break;
-
-        elapsedTime += Time.deltaTime;
-        float progress = elapsedTime / duration;
-
-        // X ekseni: Doğrusal hareket
-        float x = Mathf.Lerp(startPosition.x, targetPosition.x, progress);
-
-        // Y ekseni: Yay yüksekliği
-        float y = Mathf.Lerp(startPosition.y, targetPosition.y, progress) + arcHeight * Mathf.Sin(progress * Mathf.PI);
-
-        grenade.transform.position = new Vector2(x, y);
-        yield return null;
-    }
-
-    if (grenade != null)
-    {
-        grenade.transform.position = targetPosition;
-
-        // Grenade scriptine inişi bildir
-        Grenade grenadeScript = grenade.GetComponent<Grenade>();
-        if (grenadeScript != null)
+        if (hit.collider != null)
         {
-            grenadeScript.OnLand();
+            return hit.point;
+        }
+
+        return player.transform.position;
+    }
+
+    System.Collections.IEnumerator MoveGrenadeInArc(GameObject grenade, Vector2 targetPosition)
+    {
+        Vector2 startPosition = grenade.transform.position;
+        float elapsedTime = 0f;
+        float duration = Vector2.Distance(startPosition, targetPosition) / grenadeSpeed;
+
+        while (elapsedTime < duration)
+        {
+            if (grenade == null) yield break;
+
+            elapsedTime += Time.deltaTime;
+            float progress = elapsedTime / duration;
+
+            // X ekseni: Doğrusal hareket
+            float x = Mathf.Lerp(startPosition.x, targetPosition.x, progress);
+
+            // Y ekseni: Yay yüksekliği
+            float y = Mathf.Lerp(startPosition.y, targetPosition.y, progress) + arcHeight * Mathf.Sin(progress * Mathf.PI);
+
+            grenade.transform.position = new Vector2(x, y);
+            yield return null;
+        }
+
+        if (grenade != null)
+        {
+            grenade.transform.position = targetPosition;
+
+            // Grenade scriptine inişi bildir
+            Grenade grenadeScript = grenade.GetComponent<Grenade>();
+            if (grenadeScript != null)
+            {
+                grenadeScript.OnLand();
+            }
         }
     }
-}
+    public override void TakeDamage(int damageAmount)
+    {
+        base.TakeDamage(damageAmount); // EnemyBase sınıfının TakeDamage fonksiyonunu çağır
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
 
+    private void Flip()
+    {
+        movingRight = !movingRight;
+        spriteRenderer.flipX = !spriteRenderer.flipX;
 
-void Flip()
-{
-    // Hareket yönünü değiştir
-    movingRight = !movingRight;
+        Vector3 firePointPosition = firePoint.localPosition;
+        firePointPosition.x = -firePointPosition.x;
+        firePoint.localPosition = firePointPosition;
+    }
 
-    // Sprite'ı çevir
-    spriteRenderer.flipX = !spriteRenderer.flipX;
-
-    // Fire Point'in konumunu çevir
-    Vector3 firePointPosition = firePoint.localPosition;
-    firePointPosition.x = -firePointPosition.x; // X eksenini tersine çevir
-    firePoint.localPosition = firePointPosition;
-
-    Debug.Log("Flip triggered. FirePoint position: " + firePoint.localPosition);
-}
-
-
-
-    bool IsGrounded()
+    private bool IsGrounded()
     {
         Vector2 originLeft = groundCheck.position + Vector3.left * 0.2f;
         Vector2 originRight = groundCheck.position + Vector3.right * 0.2f;
@@ -192,5 +182,10 @@ void Flip()
         return groundedLeft || groundedRight;
     }
 
-
+    protected override void Die()
+    {
+        base.Die(); // EnemyBase sınıfındaki Die metodunu çağır
+        Debug.Log("MechaBomb is dead.");
+        Destroy(gameObject, 0.1f); // 1 saniye sonra yok et
+    }
 }
