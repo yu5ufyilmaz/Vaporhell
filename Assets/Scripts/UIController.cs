@@ -163,7 +163,7 @@ public class UIController : MonoBehaviour
         pauseMenuUI.SetActive(true);
     }
 
-    private void ResumeGame()
+    public void ResumeGame()
     {
         isPaused = false;
 

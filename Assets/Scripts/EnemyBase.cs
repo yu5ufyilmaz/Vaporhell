@@ -2,15 +2,24 @@ using UnityEngine;
 
 public class EnemyBase : MonoBehaviour
 {
-    public int health = 100;
+    [Header("Base Health")]
+    public int maxHealth = 100;
+    [HideInInspector] public int currentHealth;
+
     private bool isAlerted = false;
+
+    protected virtual void Start()
+    {
+        // Tüm düşmanlar, Start'ta kendi maxHealth değerine göre full can başlasın
+        currentHealth = maxHealth;
+    }
 
     public virtual void TakeDamage(int damageAmount)
     {
-        health -= damageAmount;
-        Debug.Log(gameObject.name + " hasar aldı: " + damageAmount);
+        currentHealth -= damageAmount;
+        Debug.Log($"{gameObject.name} hasar aldı: {damageAmount}, güncel sağlık: {currentHealth}");
 
-        if (health <= 0)
+        if (currentHealth <= 0)
         {
             Die();
         }
@@ -22,7 +31,7 @@ public class EnemyBase : MonoBehaviour
 
     protected virtual void Die()
     {
-        Debug.Log(gameObject.name + " öldü!");
+        Debug.Log($"{gameObject.name} öldü!");
         Destroy(gameObject, 5f);
     }
 
@@ -31,7 +40,8 @@ public class EnemyBase : MonoBehaviour
         if (!isAlerted)
         {
             isAlerted = true;
-            Debug.Log(gameObject.name + " alarma geçti!");
+            Debug.Log($"{gameObject.name} alarma geçti!");
         }
     }
 }
+

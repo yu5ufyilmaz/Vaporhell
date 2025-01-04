@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class BasicMechanorot : EnemyBase
 {
@@ -10,12 +11,6 @@ public class BasicMechanorot : EnemyBase
     private static readonly int Damage = Animator.StringToHash("TakeDamage");
     private static readonly int IsDead = Animator.StringToHash("isDead");
 
-    // Health Parameters
-    [Header("Health Parameters")]
-    public int maxHealth = 100;
-    private int currentHealth;
-
-    // Movement & Combat Parameters
     [Header("Combat Parameters")]
     public float moveSpeed = 3f;
     public float detectionRange = 10f;
@@ -23,43 +18,76 @@ public class BasicMechanorot : EnemyBase
     public int damage = 10;
     public float attackCooldown = 2f;
 
-    // Patrol Parameters
     [Header("Patrol Parameters")]
     public float patrolRange = 5f;
-    public float minPatrolDistance = 1.5f; // Minimum hareket mesafesi
+    public float minPatrolDistance = 1.5f;
     public float waitTimeAtPatrolPoint = 2f;
     public float runSpeedMultiplier = 1.5f;
 
-    // Internal State
-    private Transform player;
+    [Header("Health Bar Parameters")]
+    public GameObject healthBarPrefab;
+    private Slider healthBarSlider;
+    private Canvas healthBarCanvas;
+    public float healthBarDisplayDuration = 3f;
+    private Coroutine hideHealthBarCoroutine;
+
     private Rigidbody2D rb;
     private Animator animator;
+    private Transform player;
     private bool isAttacking = false;
     private bool isPatrolling = true;
     private bool isWaiting = false;
     private Vector2 patrolStartPosition;
     private Vector2 patrolTarget;
 
-    void Start()
+    // ---------------------------------------------------------
+    //  1) Start'ta maxHealth'i özelleştirip base.Start() çağır
+    // ---------------------------------------------------------
+    protected override void Start()
     {
-        // Oyuncuyu ve gerekli bileşenleri bul
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        maxHealth = 120;  // Bu düşman için mesela 120 olsun
+        base.Start();     // EnemyBase.Start() → currentHealth = maxHealth = 120
+
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        currentHealth = maxHealth;
+        player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
-        // Patrol başlangıç pozisyonunu ayarla
+        healthBarSlider = GetComponentInChildren<Slider>();
+        healthBarCanvas = GetComponentInChildren<Canvas>();
+
+        if (healthBarCanvas != null)
+            healthBarCanvas.enabled = false;
+
+        if (healthBarSlider != null)
+        {
+            healthBarSlider.maxValue = maxHealth;
+            healthBarSlider.value = currentHealth;
+        }
+
+
+        if (healthBarCanvas != null) 
+            healthBarCanvas.enabled = false;
+
+        if (healthBarSlider != null) 
+        {
+            healthBarSlider.maxValue = maxHealth;       // 120
+            healthBarSlider.value = currentHealth;      // 120
+        }
+
+        // Devriye başlangıç konumu
         patrolStartPosition = transform.position;
-        SetNewPatrolTarget();
     }
 
+    // ---------------------------------------------------------
+    //  2) Update
+    // ---------------------------------------------------------
     void Update()
     {
+        // Parent (EnemyBase) içindeki currentHealth kontrolü
         if (player == null || currentHealth <= 0) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
 
-        // Durum kontrolleri
         if (currentHealth <= 0)
         {
             Die();
@@ -84,6 +112,45 @@ public class BasicMechanorot : EnemyBase
         }
     }
 
+    // ---------------------------------------------------------
+    //  3) EnemyBase'den gelen TakeDamage'i Override Et
+    // ---------------------------------------------------------
+    public override void TakeDamage(int damageAmount)
+    {
+        // Bu satır, EnemyBase.currentHealth -= damageAmount işlemini yapar
+        base.TakeDamage(damageAmount);
+
+        // Sağlık barı güncelle
+        if (healthBarSlider != null)
+        {
+            healthBarSlider.value = currentHealth; // EnemyBase'in currentHealth'i
+        }
+
+        ShowHealthBar();
+    }
+
+    // ---------------------------------------------------------
+    //  4) Die'ı Override Et (Kendi animasyon vb. istersek)
+    // ---------------------------------------------------------
+    protected override void Die()
+    {
+        animator.SetBool(IsDead, true);
+        rb.velocity = Vector2.zero;
+        isPatrolling = false;
+        rb.constraints = RigidbodyConstraints2D.FreezeAll;
+
+        // Base'de Destroy işlemi yapıyorsanız ve 
+        // anında script devre dışı olsun istiyorsanız:
+        enabled = false;
+
+        // Dilerseniz base.Die() çağırıp 5 sn sonra yok edebilir
+        // ya da buraya Destroy(gameObject, 1f) vs. ekleyebilirsiniz.
+        base.Die();
+    }
+
+    // ---------------------------------------------------------
+    //  Hareket, Patrol, Saldırı vs...
+    // ---------------------------------------------------------
     void MoveTowardsPlayer()
     {
         animator.SetBool(IsWalking, true);
@@ -91,26 +158,11 @@ public class BasicMechanorot : EnemyBase
         Vector2 direction = (player.position - transform.position).normalized;
         rb.velocity = new Vector2(direction.x * moveSpeed * runSpeedMultiplier, rb.velocity.y);
 
+        // Sprite flip
         if (direction.x > 0)
-        {
             transform.localScale = new Vector3(-0.14f, transform.localScale.y, transform.localScale.z);
-        }
         else if (direction.x < 0)
-        {
             transform.localScale = new Vector3(0.14f, transform.localScale.y, transform.localScale.z);
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Player"))
-        {
-            PlayerController playerController = collision.GetComponent<PlayerController>();
-            if (playerController != null)
-            {
-                playerController.TakeDamage(damage); // Oyuncuya hasar ver
-            }
-        }
     }
 
     void Patrol()
@@ -128,13 +180,9 @@ public class BasicMechanorot : EnemyBase
         }
 
         if (direction.x > 0)
-        {
             transform.localScale = new Vector3(-0.1f, transform.localScale.y, transform.localScale.z);
-        }
         else if (direction.x < 0)
-        {
             transform.localScale = new Vector3(0.1f, transform.localScale.y, transform.localScale.z);
-        }
     }
 
     IEnumerator WaitAndSetNewPatrolTarget()
@@ -156,7 +204,7 @@ public class BasicMechanorot : EnemyBase
         {
             patrolOffset = Random.Range(-patrolRange, patrolRange);
         }
-        while (Mathf.Abs(patrolOffset) < minPatrolDistance); // Min mesafe kontrolü
+        while (Mathf.Abs(patrolOffset) < minPatrolDistance);
 
         patrolTarget = patrolStartPosition + new Vector2(patrolOffset, 0);
     }
@@ -172,27 +220,21 @@ public class BasicMechanorot : EnemyBase
         isAttacking = true;
         rb.velocity = Vector2.zero;
 
-        // Rastgele bir saldırı animasyonu oynat
         int randomAttackAnimation = Random.Range(0, 2);
         if (randomAttackAnimation == 0)
-        {
             animator.SetTrigger(Damage1);
-        }
         else
-        {
             animator.SetTrigger(Damage2);
-        }
 
-        yield return new WaitForSeconds(0.5f); // Saldırı animasyonunun yarısında hasar ver
+        yield return new WaitForSeconds(0.5f);
 
-        // Oyuncuya hasar ver
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
         if (distanceToPlayer <= attackRange)
         {
             PlayerController playerController = player.GetComponent<PlayerController>();
             if (playerController != null)
             {
-                playerController.TakeDamage(damage); // Oyuncunun canını azalt
+                playerController.TakeDamage(damage);
                 Debug.Log($"Player took {damage} damage from BasicMechanorot.");
             }
         }
@@ -201,27 +243,36 @@ public class BasicMechanorot : EnemyBase
         isAttacking = false;
     }
 
-
-    public override void TakeDamage(int damageAmount)
+    private void ShowHealthBar()
     {
-        base.TakeDamage(damageAmount);
-        currentHealth -= damageAmount;
-
-        animator.SetTrigger(Damage);
-
-        if (currentHealth <= 0)
+        if (healthBarCanvas != null)
         {
-            Die();
+            healthBarCanvas.enabled = true;
+
+            if (hideHealthBarCoroutine != null)
+                StopCoroutine(hideHealthBarCoroutine);
+
+            hideHealthBarCoroutine = StartCoroutine(HideHealthBarAfterDelay());
         }
     }
-    
 
-    private void Die()
+    private IEnumerator HideHealthBarAfterDelay()
     {
-        animator.SetBool(IsDead, true);
-        rb.velocity = Vector2.zero;
-        isPatrolling = false;
-        rb.constraints = RigidbodyConstraints2D.FreezeAll;
-        enabled = false;
+        yield return new WaitForSeconds(healthBarDisplayDuration);
+        if (healthBarCanvas != null)
+            healthBarCanvas.enabled = false;
+    }
+
+    // TriggerEnter, vb...
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Player"))
+        {
+            PlayerController playerController = collision.GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                playerController.TakeDamage(damage);
+            }
+        }
     }
 }
