@@ -562,6 +562,7 @@ private void SlideOffWall()
 
     private void HandleCrouch()
     {
+        // Crouch yapılamayacak durumlar:
         if (!_isGrounded || isRolling || _isDead || Mathf.Abs(_rb.velocity.y) > 0.1f)
         {
             if (isCrouching)
@@ -571,11 +572,12 @@ private void SlideOffWall()
             return;
         }
 
-        if (crouchAction.IsPressed() && !isCrouching)
+        // Crouch Action basılı tutuluyorsa EnterCrouch çağır
+        if (crouchAction.IsPressed())
         {
             EnterCrouch();
         }
-        else if (!crouchAction.IsPressed() && isCrouching)
+        else
         {
             ExitCrouch();
         }
@@ -583,16 +585,24 @@ private void SlideOffWall()
 
     private void EnterCrouch()
     {
-        isCrouching = true;
-        animator.SetBool(IsCrouching, true);
-        _rb.velocity = Vector2.zero;
+        if (!isCrouching)
+        {
+            isCrouching = true;
+            animator.SetBool(IsCrouching, true);
+            _rb.velocity = Vector2.zero;
+        }
     }
 
     private void ExitCrouch()
     {
-        isCrouching = false;
-        animator.SetBool(IsCrouching, false);
+        if (isCrouching)
+        {
+            isCrouching = false;
+            animator.SetBool(IsCrouching, false);
+        }
     }
+
+    
 
     private void UpdateCinemachineOffset(bool isMoving)
     {
@@ -611,6 +621,8 @@ private void SlideOffWall()
             offsetTransitionCoroutine = StartCoroutine(SmoothTransitionToOffset(targetOffset, transitionDuration));
         }
     }
+    
+    
 
     private IEnumerator SmoothTransitionToOffset(Vector3 targetOffset, float duration)
     {
@@ -670,6 +682,24 @@ private void SlideOffWall()
         {
             Die();
         }
+    }
+    
+    public void TeleportTo(Vector3 targetPosition)
+    {
+        // Opsiyonel: Teleport animasyonu, efekt vb.
+        // Örnek: Karakterin velocity'sini sıfırla
+        if (_rb != null)
+        {
+            _rb.velocity = Vector2.zero;
+        }
+
+        // Pozisyonu ayarla
+        transform.position = targetPosition;
+
+        // Opsiyonel: Bir animasyon (fade out / fade in) oynatılabilir
+        // _animator.SetTrigger("Teleport");
+
+        // vs. ek efektler
     }
 
     public void Heal(int healAmount)
