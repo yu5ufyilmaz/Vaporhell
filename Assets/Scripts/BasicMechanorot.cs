@@ -19,13 +19,14 @@ public class BasicMechanorot : EnemyBase
     public float attackCooldown = 2f;
 
     [Header("Patrol Parameters")]
-    public float patrolSpeed = 2f;
-
-    // MechaBomb ile BİREBİR AYNI ground check alanları
-    [Header("Ground Check Parameters")]
-    public Transform groundCheck;
+    public float patrolRange = 5f;
+    public float minPatrolDistance = 1.5f;
+    public float waitTimeAtPatrolPoint = 2f;
+    public float runSpeedMultiplier = 1.5f;
     public float groundCheckDistance = 2f;
+    public Transform groundCheck;
     public LayerMask groundLayer;
+
 
     [Header("Health Bar Parameters")]
     public GameObject healthBarPrefab;
@@ -37,23 +38,31 @@ public class BasicMechanorot : EnemyBase
     private Rigidbody2D rb;
     private Animator animator;
     private Transform player;
-
-    // MechaBombBehavior'daki "movingRight" gibi
-    private bool movingRight = true;
-
     private bool isAttacking = false;
+    private bool isPatrolling = true;
+    private bool isWaiting = false;
+    private Vector2 patrolStartPosition;
+    private Vector2 patrolTarget;
+    
+    // Base Scale for consistent flipping
+    private float baseScaleX;
 
     // ---------------------------------------------------------
     //  1) Start'ta maxHealth'i özelleştirip base.Start() çağır
     // ---------------------------------------------------------
     protected override void Start()
     {
-        maxHealth = 120;
-        base.Start(); // (EnemyBase) currentHealth = 120
+        maxHealth = 120;  // Bu düşman için mesela 120 olsun
+        base.Start();     // EnemyBase.Start() → currentHealth = maxHealth = 120
 
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        if (player == null)
+        {
+            Debug.LogError("BasicMechanorot: Player not found. Ensure the player has the 'Player' tag.");
+        }
 
         healthBarSlider = GetComponentInChildren<Slider>();
         healthBarCanvas = GetComponentInChildren<Canvas>();
@@ -66,94 +75,174 @@ public class BasicMechanorot : EnemyBase
             healthBarSlider.maxValue = maxHealth;
             healthBarSlider.value = currentHealth;
         }
+
+        // Store the initial X scale for consistent flipping
+        baseScaleX = Mathf.Abs(transform.localScale.x);
+
+        // Devriye başlangıç konumu
+        patrolStartPosition = transform.position;
+
+        // Initialize patrol target
+        SetNewPatrolTarget();
+
+        Debug.Log("BasicMechanorot initialized. Player found: " + (player != null));
     }
 
     // ---------------------------------------------------------
-    //  2) Update - Yakınsa saldır, değilse devriye
+    //  2) Update
     // ---------------------------------------------------------
     void Update()
     {
+        // Parent (EnemyBase) içindeki currentHealth kontrolü
         if (player == null || currentHealth <= 0) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+        Debug.Log($"BasicMechanorot: Distance to player is {distanceToPlayer}");
+
+        if (currentHealth <= 0)
+        {
+            Die();
+            return;
+        }
 
         if (distanceToPlayer <= detectionRange && distanceToPlayer > attackRange && !isAttacking)
         {
-            // Oyuncuya doğru hareket / kovalama
             MoveTowardsPlayer();
         }
         else if (distanceToPlayer <= attackRange && !isAttacking)
         {
+            Debug.Log("BasicMechanorot: Player within attack range. Starting attack.");
             StartCoroutine(AttackPlayer());
+        }
+        else if (isPatrolling && !isAttacking)
+        {
+            Patrol();
         }
         else
         {
-            // Menzil dışında kaldığında devriye
-            PatrolPlatform();
+            Idle();
         }
     }
 
     // ---------------------------------------------------------
-    //  3) MechaBombBehavior'dan BİREBİR ALINAN Metotlar
+    //  3) EnemyBase'den gelen TakeDamage'i Override Et
     // ---------------------------------------------------------
-
-    private void PatrolPlatform()
+    public override void TakeDamage(int damageAmount)
     {
-        animator.SetBool(IsWalking, true);
+        // Bu satır, EnemyBase.currentHealth -= damageAmount işlemini yapar
+        base.TakeDamage(damageAmount);
+        Debug.Log($"BasicMechanorot: Took {damageAmount} damage. Current health: {currentHealth}");
 
-        // Önünde zemin bitmişse veya engelse yön değiştir
-        if (!IsGrounded())
+        // Sağlık barı güncelle
+        if (healthBarSlider != null)
         {
-            Flip();
+            healthBarSlider.value = currentHealth; // EnemyBase'in currentHealth'i
+            Debug.Log("BasicMechanorot: Health bar updated.");
         }
 
-        // Sağ veya sola doğru sabit hızla ilerle
-        transform.Translate((movingRight ? Vector2.right : Vector2.left) * patrolSpeed * Time.deltaTime);
-    }
-
-    private bool IsGrounded()
-    {
-        Vector2 originLeft = groundCheck.position + Vector3.left * 0.2f;
-        Vector2 originRight = groundCheck.position + Vector3.right * 0.2f;
-
-        bool groundedLeft = Physics2D.Raycast(originLeft, Vector2.down, groundCheckDistance, groundLayer);
-        bool groundedRight = Physics2D.Raycast(originRight, Vector2.down, groundCheckDistance, groundLayer);
-
-        Debug.DrawRay(originLeft, Vector2.down * groundCheckDistance, Color.red);
-        Debug.DrawRay(originRight, Vector2.down * groundCheckDistance, Color.red);
-
-        return groundedLeft || groundedRight;
-    }
-
-    private void Flip()
-    {
-        movingRight = !movingRight;
-        
-        // Sprite'ı flipX ile döndürüyorsanız:
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        sr.flipX = !sr.flipX;
-        
-        // Eğer firePoint vb. var ise burada da localPosition.x’i ters çevirebilirsiniz.
+        ShowHealthBar();
     }
 
     // ---------------------------------------------------------
-    //  4) Saldırı, Hasar Alma, Ölüm vb. (Var olanlar korunabilir)
+    //  4) Die'ı Override Et (Kendi animasyon vb. istersek)
     // ---------------------------------------------------------
-    private void MoveTowardsPlayer()
+    protected override void Die()
+    {
+        animator.SetBool(IsDead, true);
+        rb.velocity = Vector2.zero;
+        isPatrolling = false;
+        rb.constraints = RigidbodyConstraints2D.FreezeAll;
+
+        Debug.Log("BasicMechanorot: Died.");
+
+        // Base'de Destroy işlemi yapıyorsanız ve 
+        // anında script devre dışı olsun istiyorsanız:
+        enabled = false;
+
+        // Dilerseniz base.Die() çağırıp 5 sn sonra yok edebilir
+        // ya da buraya Destroy(gameObject, 1f) vs. ekleyebilirsiniz.
+        base.Die();
+    }
+
+    // ---------------------------------------------------------
+    //  Hareket, Patrol, Saldırı vs...
+    // ---------------------------------------------------------
+    void MoveTowardsPlayer()
     {
         animator.SetBool(IsWalking, true);
+
         Vector2 direction = (player.position - transform.position).normalized;
+        rb.velocity = new Vector2(direction.x * moveSpeed * runSpeedMultiplier, rb.velocity.y);
+
+        // Sprite flip
+        if (direction.x > 0)
+            transform.localScale = new Vector3(-0.14f, transform.localScale.y, transform.localScale.z);
+        else if (direction.x < 0)
+            transform.localScale = new Vector3(0.14f, transform.localScale.y, transform.localScale.z);
+
+        Debug.Log("BasicMechanorot: Moving towards player.");
+    }
+
+    void Patrol()
+    {
+        if (isWaiting) 
+        {
+            Debug.Log("BasicMechanorot: Currently waiting at patrol point.");
+            return;
+        }
+
+        animator.SetBool(IsWalking, true);
+
+        Vector2 direction = (patrolTarget - (Vector2)transform.position).normalized;
         rb.velocity = new Vector2(direction.x * moveSpeed, rb.velocity.y);
 
-        // Hangi yöne bakacak?
-        if (direction.x > 0 && !movingRight)
+        if (Vector2.Distance(transform.position, patrolTarget) < 0.2f)
         {
-            Flip();
+            StartCoroutine(WaitAndSetNewPatrolTarget());
         }
-        else if (direction.x < 0 && movingRight)
+
+        if (direction.x > 0)
+            transform.localScale = new Vector3(-0.1f, transform.localScale.y, transform.localScale.z);
+        else if (direction.x < 0)
+            transform.localScale = new Vector3(0.1f, transform.localScale.y, transform.localScale.z);
+
+        Debug.Log("BasicMechanorot: Patrolling.");
+    }
+    
+
+    IEnumerator WaitAndSetNewPatrolTarget()
+    {
+        isWaiting = true;
+        rb.velocity = Vector2.zero;
+        animator.SetBool(IsWalking, false);
+
+        Debug.Log("BasicMechanorot: Waiting at patrol point.");
+
+        yield return new WaitForSeconds(waitTimeAtPatrolPoint);
+
+        SetNewPatrolTarget();
+        isWaiting = false;
+        Debug.Log("BasicMechanorot: Finished waiting. Setting new patrol target.");
+    }
+
+    void SetNewPatrolTarget()
+    {
+        float patrolOffset;
+        do
         {
-            Flip();
+            patrolOffset = Random.Range(-patrolRange, patrolRange);
         }
+        while (Mathf.Abs(patrolOffset) < minPatrolDistance);
+
+        patrolTarget = patrolStartPosition + new Vector2(patrolOffset, 0);
+        Debug.Log($"BasicMechanorot: New patrol target set at {patrolTarget}");
+    }
+
+    void Idle()
+    {
+        rb.velocity = Vector2.zero;
+        animator.SetBool(IsWalking, false);
+        Debug.Log("BasicMechanorot: Idling.");
     }
 
     IEnumerator AttackPlayer()
@@ -161,38 +250,40 @@ public class BasicMechanorot : EnemyBase
         isAttacking = true;
         rb.velocity = Vector2.zero;
 
-        // Basit saldırı animasyonu
+        Debug.Log("BasicMechanorot: Initiating attack.");
+
         int randomAttackAnimation = Random.Range(0, 2);
         if (randomAttackAnimation == 0)
             animator.SetTrigger(Damage1);
         else
             animator.SetTrigger(Damage2);
 
+        Debug.Log($"BasicMechanorot: Triggered attack animation {(randomAttackAnimation == 0 ? "Damage1" : "Damage2")}.");
+
         yield return new WaitForSeconds(0.5f);
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
         if (distanceToPlayer <= attackRange)
         {
-            // Oyuncuya hasar ver
             PlayerController playerController = player.GetComponent<PlayerController>();
             if (playerController != null)
             {
+                Debug.Log($"BasicMechanorot: Applying {damage} damage to player.");
                 playerController.TakeDamage(damage);
             }
+            else
+            {
+                Debug.LogWarning("BasicMechanorot: PlayerController component not found on Player.");
+            }
+        }
+        else
+        {
+            Debug.Log("BasicMechanorot: Player moved out of attack range.");
         }
 
         yield return new WaitForSeconds(attackCooldown - 0.5f);
         isAttacking = false;
-    }
-
-    public override void TakeDamage(int damageAmount)
-    {
-        base.TakeDamage(damageAmount);
-
-        if (healthBarSlider != null)
-            healthBarSlider.value = currentHealth;
-
-        ShowHealthBar();
+        Debug.Log("BasicMechanorot: Attack cooldown completed. Ready to attack again.");
     }
 
     private void ShowHealthBar()
@@ -200,6 +291,7 @@ public class BasicMechanorot : EnemyBase
         if (healthBarCanvas != null)
         {
             healthBarCanvas.enabled = true;
+            Debug.Log("BasicMechanorot: Health bar shown.");
 
             if (hideHealthBarCoroutine != null)
                 StopCoroutine(hideHealthBarCoroutine);
@@ -212,15 +304,41 @@ public class BasicMechanorot : EnemyBase
     {
         yield return new WaitForSeconds(healthBarDisplayDuration);
         if (healthBarCanvas != null)
+        {
             healthBarCanvas.enabled = false;
+            Debug.Log("BasicMechanorot: Health bar hidden.");
+        }
     }
 
-    protected override void Die()
+    // TriggerEnter, vb...
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        animator.SetBool(IsDead, true);
-        rb.velocity = Vector2.zero;
-        rb.constraints = RigidbodyConstraints2D.FreezeAll;
-        base.Die();
-        // Yok etme vs...
+        if (collision.CompareTag("Player"))
+        {
+            PlayerController playerController = collision.GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                Debug.Log("BasicMechanorot: Player entered trigger. Applying damage.");
+                playerController.TakeDamage(damage);
+            }
+            else
+            {
+                Debug.LogWarning("BasicMechanorot: PlayerController component not found on Player.");
+            }
+        }
+    }
+    
+    private bool IsGrounded()
+    {
+        Vector2 originLeft = groundCheck.position + Vector3.left * 0.2f;
+        Vector2 originRight = groundCheck.position + Vector3.right * 0.2f;
+
+        bool groundedLeft = Physics2D.Raycast(originLeft, Vector2.down, groundCheckDistance, groundLayer);
+        bool groundedRight = Physics2D.Raycast(originRight, Vector2.down, groundCheckDistance, groundLayer);
+
+        Debug.DrawRay(originLeft, Vector2.down * groundCheckDistance, Color.red);
+        Debug.DrawRay(originRight, Vector2.down * groundCheckDistance, Color.red);
+
+        return groundedLeft || groundedRight;
     }
 }

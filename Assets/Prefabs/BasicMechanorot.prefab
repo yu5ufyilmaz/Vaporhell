@@ -112,7 +112,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 93e10b28fca4aac48b838c01c92f150a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 20, y: 30.007326}
@@ -167,12 +167,10 @@ MonoBehaviour:
   attackRange: 2
   damage: 20
   attackCooldown: 2
-  patrolSpeed: 2
-  groundCheck: {fileID: 2934336127084906593}
-  groundCheckDistance: 2
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 64
+  patrolRange: 5
+  minPatrolDistance: 1.5
+  waitTimeAtPatrolPoint: 2
+  runSpeedMultiplier: 1.5
   healthBarPrefab: {fileID: 8382789295525882154}
   healthBarDisplayDuration: 1
 --- !u!95 &-6312883676314535365
@@ -228,7 +226,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.0968616, y: -0.096865654}
+  m_Offset: {x: -1.687654, y: -0.09686661}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -239,7 +237,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 8.763668, y: 22.451876}
+  m_Size: {x: 13.337054, y: 22.451878}
   m_EdgeRadius: 0
 --- !u!1001 &1476218039767116422
 PrefabInstance:
@@ -289,9 +287,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3824125547409573327, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4752275787699417923, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5235686628923895805, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5394515448533461652, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6929124542054122412, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
       propertyPath: m_Name
       value: HealthBar
+      objectReference: {fileID: 0}
+    - target: {fileID: 6929124542054122412, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7089214386590834927, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7922081165463518367, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 89715853
       objectReference: {fileID: 0}
     - target: {fileID: 8111071691646505226, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
       propertyPath: m_AnchorMax.x

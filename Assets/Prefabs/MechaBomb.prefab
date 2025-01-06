@@ -82,7 +82,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1785629173060441853
 Transform:
   m_ObjectHideFlags: 0
@@ -326,6 +326,18 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3824125547409573327, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4752275787699417923, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5235686628923895805, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5243653053976628124, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -346,17 +358,33 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5394515448533461652, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6929124542054122412, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
       propertyPath: m_Name
       value: HealthBar
       objectReference: {fileID: 0}
+    - target: {fileID: 6929124542054122412, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7089214386590834927, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7922081165463518367, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 89715853
+      objectReference: {fileID: 0}
     - target: {fileID: 8111071691646505226, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8111071691646505226, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

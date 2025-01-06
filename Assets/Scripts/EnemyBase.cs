@@ -32,7 +32,7 @@ public class EnemyBase : MonoBehaviour
     protected virtual void Die()
     {
         Debug.Log($"{gameObject.name} öldü!");
-        Destroy(gameObject, 5f);
+        Destroy(gameObject, 1f);
     }
 
     protected virtual void Alert()
