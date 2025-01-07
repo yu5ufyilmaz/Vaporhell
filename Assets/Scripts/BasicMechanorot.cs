@@ -205,8 +205,7 @@ public class BasicMechanorot : EnemyBase
             transform.localScale = new Vector3(-0.1f, transform.localScale.y, transform.localScale.z);
         else if (direction.x < 0)
             transform.localScale = new Vector3(0.1f, transform.localScale.y, transform.localScale.z);
-
-        Debug.Log("BasicMechanorot: Patrolling.");
+        
     }
     
 
@@ -215,14 +214,12 @@ public class BasicMechanorot : EnemyBase
         isWaiting = true;
         rb.velocity = Vector2.zero;
         animator.SetBool(IsWalking, false);
-
-        Debug.Log("BasicMechanorot: Waiting at patrol point.");
+        
 
         yield return new WaitForSeconds(waitTimeAtPatrolPoint);
 
         SetNewPatrolTarget();
         isWaiting = false;
-        Debug.Log("BasicMechanorot: Finished waiting. Setting new patrol target.");
     }
 
     void SetNewPatrolTarget()
@@ -235,30 +232,26 @@ public class BasicMechanorot : EnemyBase
         while (Mathf.Abs(patrolOffset) < minPatrolDistance);
 
         patrolTarget = patrolStartPosition + new Vector2(patrolOffset, 0);
-        Debug.Log($"BasicMechanorot: New patrol target set at {patrolTarget}");
     }
 
     void Idle()
     {
         rb.velocity = Vector2.zero;
         animator.SetBool(IsWalking, false);
-        Debug.Log("BasicMechanorot: Idling.");
     }
 
     IEnumerator AttackPlayer()
     {
         isAttacking = true;
         rb.velocity = Vector2.zero;
-
-        Debug.Log("BasicMechanorot: Initiating attack.");
+        
 
         int randomAttackAnimation = Random.Range(0, 2);
         if (randomAttackAnimation == 0)
             animator.SetTrigger(Damage1);
         else
             animator.SetTrigger(Damage2);
-
-        Debug.Log($"BasicMechanorot: Triggered attack animation {(randomAttackAnimation == 0 ? "Damage1" : "Damage2")}.");
+        
 
         yield return new WaitForSeconds(0.5f);
 
@@ -268,7 +261,6 @@ public class BasicMechanorot : EnemyBase
             PlayerController playerController = player.GetComponent<PlayerController>();
             if (playerController != null)
             {
-                Debug.Log($"BasicMechanorot: Applying {damage} damage to player.");
                 playerController.TakeDamage(damage);
             }
             else
@@ -283,7 +275,6 @@ public class BasicMechanorot : EnemyBase
 
         yield return new WaitForSeconds(attackCooldown - 0.5f);
         isAttacking = false;
-        Debug.Log("BasicMechanorot: Attack cooldown completed. Ready to attack again.");
     }
 
     private void ShowHealthBar()
@@ -291,7 +282,6 @@ public class BasicMechanorot : EnemyBase
         if (healthBarCanvas != null)
         {
             healthBarCanvas.enabled = true;
-            Debug.Log("BasicMechanorot: Health bar shown.");
 
             if (hideHealthBarCoroutine != null)
                 StopCoroutine(hideHealthBarCoroutine);
@@ -306,7 +296,6 @@ public class BasicMechanorot : EnemyBase
         if (healthBarCanvas != null)
         {
             healthBarCanvas.enabled = false;
-            Debug.Log("BasicMechanorot: Health bar hidden.");
         }
     }
 
@@ -317,8 +306,7 @@ public class BasicMechanorot : EnemyBase
         {
             PlayerController playerController = collision.GetComponent<PlayerController>();
             if (playerController != null)
-            {
-                Debug.Log("BasicMechanorot: Player entered trigger. Applying damage.");
+            { 
                 playerController.TakeDamage(damage);
             }
             else

@@ -56,7 +56,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float topRayOffsetY = 1.2f;      // Üst yatay ray Y offset
     [SerializeField] private float bottomRayOffsetY = 0.5f;   // Alt yatay ray Y offset
     private float verticalRayStartOffset = -0.2f;
-    
+
     [SerializeField] private float horizontalRayOriginOffsetY = 1.2f; 
     [SerializeField] private float horizontalRayDistance = 1.2f;      
     [SerializeField] private float verticalRayOriginOffsetY = 0.2f;   
@@ -125,6 +125,9 @@ public class PlayerController : MonoBehaviour
     private InputAction rollAction;
     private InputAction crouchAction;
 
+    // Yeni Değişken: Önceki zemin durumu
+    private bool previousIsGrounded;
+
     void Awake()
     {
         playerInput = GetComponent<PlayerInput>();
@@ -153,14 +156,30 @@ public class PlayerController : MonoBehaviour
         {
             healthBarUI.UpdateHealthBar(currentHealth, maxHealth);
         }
+
+        // Başlangıçta önceki zemin durumu
+        previousIsGrounded = IsGrounded();
     }
 
     private void Update()
     {
-        if (_isDead || isRolling || isClimbing)
+        if (_isDead || isClimbing)
         {
             // Tırmanma veya roll sırasında normal inputlar iptal
             return;
+        }
+
+        // Önceki frame'deki zemin durumu
+        previousIsGrounded = _isGrounded;
+        // Şu anki zemin durumu
+        _isGrounded = IsGrounded();
+
+        if (_isGrounded && !previousIsGrounded)
+        {
+            // Karakter yere indiğinde zıplama sayısını sıfırla
+            remainingJumps = maxJumps;
+            animator.SetBool(IsFalling, false);
+            animator.SetBool(IsJumping, false);
         }
 
         if (!isCrouching && !isGrabbed)
@@ -177,18 +196,13 @@ public class PlayerController : MonoBehaviour
         HandleCrouch();
         UpdateFirePointPosition();
         HandleTeleport();
-        
+
         // Çoklu ray ledge grab
         HandleLedgeGrabRaycast_MultiRay();
 
         HandleFalling();
-        _isGrounded = IsGrounded();
-
-        if (_isGrounded)
-        {
-            animator.SetBool(IsFalling, false);
-        }
     }
+
     private void ShowVerticalRayForDebugAlways()
     {
         if (!showDebugVertical) return;
@@ -198,94 +212,91 @@ public class PlayerController : MonoBehaviour
         Debug.DrawRay(verticalRayOrigin, Vector2.up * verticalRayDistance, Color.green);
     }
 
-private void HandleLedgeGrabRaycast_MultiRay()
-{
-    if (isClimbing || isGrabbed)
-        return;
-
-    // Karakterin baktığı yön (flipX durumuna göre -1 veya 1)
-    float direction = _spriteRenderer.flipX ? 1f : -1f;
-
-    // Üst ray başlangıç noktası ve yön
-    Vector2 topRayOrigin = new Vector2(transform.position.x + direction * horizontalRayDistance, transform.position.y + topRayOffsetY);
-    Vector2 horizontalDir = Vector2.left * direction;
-
-    RaycastHit2D topWallHit = Physics2D.Raycast(topRayOrigin, horizontalDir, horizontalRayDistance, groundMask);
-
-    if (showDebugHorizontal)
+    private void HandleLedgeGrabRaycast_MultiRay()
     {
-        Debug.DrawRay(topRayOrigin, horizontalDir * horizontalRayDistance, Color.yellow);
-        Debug.Log("[DEBUG] Üst ray gönderildi: " + (topWallHit.collider != null ? "Çarptı: " + topWallHit.collider.name : "Çarpmadı"));
-    }
+        if (isClimbing || isGrabbed)
+            return;
 
-    // Alt ray başlangıç noktası ve yön
-    Vector2 bottomRayOrigin = new Vector2(transform.position.x + direction * horizontalRayDistance, transform.position.y + bottomRayOffsetY);
-    RaycastHit2D bottomWallHit = Physics2D.Raycast(bottomRayOrigin, horizontalDir, horizontalRayDistance, groundMask);
+        // Karakterin baktığı yön (flipX durumuna göre -1 veya 1)
+        float direction = _spriteRenderer.flipX ? 1f : -1f;
 
-    if (showDebugHorizontal)
-    {
-        Debug.DrawRay(bottomRayOrigin, horizontalDir * horizontalRayDistance, Color.cyan);
-        Debug.Log("[DEBUG] Alt ray gönderildi: " + (bottomWallHit.collider != null ? "Çarptı: " + bottomWallHit.collider.name : "Çarpmadı"));
-    }
+        // Üst ray başlangıç noktası ve yön
+        Vector2 topRayOrigin = new Vector2(transform.position.x + direction * horizontalRayDistance, transform.position.y + topRayOffsetY);
+        Vector2 horizontalDir = Vector2.left * direction;
 
-    // Mantık Kontrolleri:
-    if (topWallHit.collider != null && bottomWallHit.collider != null)
-    {
-        Debug.Log("[DEBUG] Hem üst ray hem de alt ray çarptı. Kayma başlatılıyor...");
-        SlideOffWall(); // Kayma davranışını başlat
-        return;
-    }
+        RaycastHit2D topWallHit = Physics2D.Raycast(topRayOrigin, horizontalDir, horizontalRayDistance, groundMask);
 
-    if (topWallHit.collider != null && bottomWallHit.collider == null)
-    {
-        Debug.Log("[DEBUG] Sadece üst ray çarptı. Kayma başlatılıyor...");
-        SlideOffWall(); // Kayma davranışını başlat
-        return;
-    }
-
-    if (topWallHit.collider == null && bottomWallHit.collider == null)
-    {
-        Debug.Log("[DEBUG] Ne üst ray ne de alt ray çarptı. Tırmanma iptal edildi.");
-        return;
-    }
-
-    if (topWallHit.collider == null && bottomWallHit.collider != null)
-    {
-        Debug.Log("[DEBUG] Sadece alt ray çarptı. Tırmanma başlatılıyor...");
-        Vector2 contactPoint = bottomWallHit.point;
-        Vector2 snapPos = new Vector2(contactPoint.x + (0.05f * direction), transform.position.y);
-
-        // ============ DİKEY RAY ============ 
-        Vector2 verticalRayOrigin = new Vector2(transform.position.x + direction * horizontalRayDistance, transform.position.y + verticalRayStartOffset);
-        RaycastHit2D topHit = Physics2D.Raycast(verticalRayOrigin, Vector2.up, verticalRayDistance, groundMask);
-
-        if (showDebugVertical)
+        if (showDebugHorizontal)
         {
-            Debug.DrawRay(verticalRayOrigin, Vector2.up * verticalRayDistance, Color.green);
-            Debug.Log("[DEBUG] Dikey ray gönderildi: " + (topHit.collider != null ? "Çarptı: " + topHit.collider.name : "Çarpmadı"));
+            Debug.DrawRay(topRayOrigin, horizontalDir * horizontalRayDistance, Color.yellow);
+            Debug.Log("[DEBUG] Üst ray gönderildi: " + (topWallHit.collider != null ? "Çarptı: " + topWallHit.collider.name : "Çarpmadı"));
         }
 
-        if (topHit.collider == null)
+        // Alt ray başlangıç noktası ve yön
+        Vector2 bottomRayOrigin = new Vector2(transform.position.x + direction * horizontalRayDistance, transform.position.y + bottomRayOffsetY);
+        RaycastHit2D bottomWallHit = Physics2D.Raycast(bottomRayOrigin, horizontalDir, horizontalRayDistance, groundMask);
+
+        if (showDebugHorizontal)
         {
-            Debug.Log("[DEBUG] Dikey ray üst kenar bulamadı. Tırmanma başlatılmadı.");
+            Debug.DrawRay(bottomRayOrigin, horizontalDir * horizontalRayDistance, Color.cyan);
+            Debug.Log("[DEBUG] Alt ray gönderildi: " + (bottomWallHit.collider != null ? "Çarptı: " + bottomWallHit.collider.name : "Çarpmadı"));
+        }
+
+        // Mantık Kontrolleri:
+        if (topWallHit.collider != null && bottomWallHit.collider != null)
+        {
+            Debug.Log("[DEBUG] Hem üst ray hem de alt ray çarptı. Kayma başlatılıyor...");
+            SlideOffWall(); // Kayma davranışını başlat
             return;
         }
 
-        Vector2 topPoint = topHit.point;
-        StartMultiRayClimbApproach(snapPos, topPoint);
+        if (topWallHit.collider != null && bottomWallHit.collider == null)
+        {
+            Debug.Log("[DEBUG] Sadece üst ray çarptı. Kayma başlatılıyor...");
+            SlideOffWall(); // Kayma davranışını başlat
+            return;
+        }
+
+        if (topWallHit.collider == null && bottomWallHit.collider == null)
+        {
+            Debug.Log("[DEBUG] Ne üst ray ne de alt ray çarptı. Tırmanma iptal edildi.");
+            return;
+        }
+
+        if (topWallHit.collider == null && bottomWallHit.collider != null)
+        {
+            Debug.Log("[DEBUG] Sadece alt ray çarptı. Tırmanma başlatılıyor...");
+            Vector2 contactPoint = bottomWallHit.point;
+            Vector2 snapPos = new Vector2(contactPoint.x + (0.05f * direction), transform.position.y);
+
+            // ============ DİKEY RAY ============ 
+            Vector2 verticalRayOrigin = new Vector2(transform.position.x + direction * horizontalRayDistance, transform.position.y + verticalRayStartOffset);
+            RaycastHit2D topHit = Physics2D.Raycast(verticalRayOrigin, Vector2.up, verticalRayDistance, groundMask);
+
+            if (showDebugVertical)
+            {
+                Debug.DrawRay(verticalRayOrigin, Vector2.up * verticalRayDistance, Color.green);
+                Debug.Log("[DEBUG] Dikey ray gönderildi: " + (topHit.collider != null ? "Çarptı: " + topHit.collider.name : "Çarpmadı"));
+            }
+
+            if (topHit.collider == null)
+            {
+                Debug.Log("[DEBUG] Dikey ray üst kenar bulamadı. Tırmanma başlatılmadı.");
+                return;
+            }
+
+            Vector2 topPoint = topHit.point;
+            StartMultiRayClimbApproach(snapPos, topPoint);
+        }
     }
-}
 
-
-private void SlideOffWall()
-{
-    // Karakterin duvardan aşağı kaymasını sağla
-    _rb.velocity = new Vector2(0, -5f); // Aşağı doğru bir hız ver (kayma davranışı)
-    _rb.gravityScale = fallingGravityScale; // Normal düşme hızına geç
-    animator.SetBool(IsFalling, true); // Düşme animasyonu tetiklenebilir
-}
-
-
+    private void SlideOffWall()
+    {
+        // Karakterin duvardan aşağı kaymasını sağla
+        _rb.velocity = new Vector2(0, -5f); // Aşağı doğru bir hız ver (kayma davranışı)
+        _rb.gravityScale = fallingGravityScale; // Normal düşme hızına geç
+        animator.SetBool(IsFalling, true); // Düşme animasyonu tetiklenebilir
+    }
 
     [SerializeField] private float tileSize = 1.0f; // Tileset karelerinin boyutu (örneğin, 1 birim)
 
@@ -333,7 +344,6 @@ private void SlideOffWall()
         isClimbing = false; // Yeniden raycast yapılabilir
     }
 
-    
     private void FinishClimbing()
     {
         Debug.Log("[DEBUG] FinishClimbing çağrıldı. Tırmanma animasyonu bitiriliyor...");
@@ -348,24 +358,37 @@ private void SlideOffWall()
         // Raycast başlangıç pozisyonunu değiştir
         transform.position = new Vector3(transform.position.x + 0.2f, transform.position.y + 1.7f, transform.position.z); // X ekseninde bir miktar kaydır
     }
-    
+
     private void HandleFalling()
     {
-        if (!_isGrounded && _rb.velocity.y < -1.5f)
+        if (!_isGrounded && !isClimbing)
         {
-            if (!animator.GetBool(IsFalling))
+            // Yerçekimini artırarak karakterin daha hızlı düşmesini sağlar
+            _rb.gravityScale = fallingGravityScale;
+
+            // Düşme animasyonunu tetikler
+            if (_rb.velocity.y < -1.5f)
             {
-                animator.SetBool(IsFalling, true);
+                if (!animator.GetBool(IsFalling))
+                {
+                    animator.SetBool(IsFalling, true);
+                }
             }
         }
-        else if (_isGrounded)
+        else
         {
+            // Yerçekimini normal seviyeye geri getirir
+            _rb.gravityScale = normalGravityScale;
+
+            // Düşme animasyonunu sıfırlar
             if (animator.GetBool(IsFalling))
             {
                 animator.SetBool(IsFalling, false);
             }
         }
     }
+
+
 
     private void HandleJump()
     {
@@ -532,13 +555,14 @@ private void SlideOffWall()
 
     private void HandleRoll()
     {
-        if (!_isGrounded || _isDead || Mathf.Abs(_rb.velocity.y) > 0.1f) return;
+        if (_isDead || isRolling || !canRoll) return;
 
-        if (rollAction.triggered && canRoll && !isRolling)
+        if (rollAction.triggered && !isRolling)
         {
             StartCoroutine(PerformRoll());
         }
     }
+
 
     private IEnumerator PerformRoll()
     {
@@ -547,18 +571,18 @@ private void SlideOffWall()
         animator.SetTrigger(RollTrigger);
 
         float rollDirection = _spriteRenderer.flipX ? 1f : -1f;
-        _rb.gravityScale = 0;
-        _rb.velocity = new Vector2(rollDirection * rollSpeed, 0);
-
+        
+        _rb.velocity = new Vector2(rollDirection * rollSpeed, _rb.velocity.y);
+        
         yield return new WaitForSeconds(rollDuration);
-
-        _rb.velocity = Vector2.zero;
-        _rb.gravityScale = normalGravityScale;
+        
+        _rb.velocity = new Vector2(0, _rb.velocity.y);
         isRolling = false;
-
+        
         yield return new WaitForSeconds(rollCooldown);
         canRoll = true;
     }
+
 
     private void HandleCrouch()
     {
@@ -602,8 +626,6 @@ private void SlideOffWall()
         }
     }
 
-    
-
     private void UpdateCinemachineOffset(bool isMoving)
     {
         Vector3 newTargetOffset = isMoving
@@ -621,8 +643,6 @@ private void SlideOffWall()
             offsetTransitionCoroutine = StartCoroutine(SmoothTransitionToOffset(targetOffset, transitionDuration));
         }
     }
-    
-    
 
     private IEnumerator SmoothTransitionToOffset(Vector3 targetOffset, float duration)
     {
@@ -644,8 +664,6 @@ private void SlideOffWall()
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
-            _isGrounded = true;
-            remainingJumps = maxJumps;
             hasJumped = false;
             _rb.gravityScale = normalGravityScale;
 
@@ -658,7 +676,7 @@ private void SlideOffWall()
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
-            _isGrounded = false;
+            // Bu metot artık zıplama sayısını sıfırlamıyor
         }
     }
 
@@ -670,7 +688,8 @@ private void SlideOffWall()
 
     public void TakeDamage(int damageAmount)
     {
-        if (_isDead) return;
+        if (_isDead || isRolling) return; // Roll sırasında hasar almayı engelle
+
         currentHealth -= damageAmount;
 
         if (healthBarUI != null)
@@ -683,7 +702,8 @@ private void SlideOffWall()
             Die();
         }
     }
-    
+
+
     public void TeleportTo(Vector3 targetPosition)
     {
         // Opsiyonel: Teleport animasyonu, efekt vb.
@@ -738,3 +758,4 @@ private void SlideOffWall()
         Destroy(gameObject);
     }
 }
+

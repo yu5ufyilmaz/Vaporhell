@@ -133,7 +133,7 @@ CapsuleCollider2D:
   m_GameObject: {fileID: 1605945386542671820}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 7a5df41e2a61e7d4ba6585bc937941f8, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -269,11 +269,11 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   topRayOffsetY: 1.2
-  bottomRayOffsetY: 0.5
+  bottomRayOffsetY: 0
   horizontalRayOriginOffsetY: 1.2
-  horizontalRayDistance: 1.2
+  horizontalRayDistance: 0.8
   verticalRayOriginOffsetY: 0.2
-  verticalRayDistance: 2.5
+  verticalRayDistance: 1.2
   climbDuration: 0.6
   climbTopOffset: 0.5
   moveSpeed: 10
