@@ -416,6 +416,15 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SkipVideo"",
+                    ""type"": ""Button"",
+                    ""id"": ""6aa9138a-a758-4071-9491-95edbdf8865d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -737,6 +746,28 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""action"": ""OpenMap"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""adbfca2d-e4fa-4dd2-ac47-1dfab0bcb466"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SkipVideo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""716bb6c6-adfb-4353-b187-ea9cb099bf26"",
+                    ""path"": ""<Gamepad>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SkipVideo"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -765,6 +796,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_UI_RightClick = m_UI.FindAction("RightClick", throwIfNotFound: true);
         m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
         m_UI_OpenMap = m_UI.FindAction("OpenMap", throwIfNotFound: true);
+        m_UI_SkipVideo = m_UI.FindAction("SkipVideo", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -938,6 +970,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_RightClick;
     private readonly InputAction m_UI_Cancel;
     private readonly InputAction m_UI_OpenMap;
+    private readonly InputAction m_UI_SkipVideo;
     public struct UIActions
     {
         private @InputActions m_Wrapper;
@@ -952,6 +985,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         public InputAction @RightClick => m_Wrapper.m_UI_RightClick;
         public InputAction @Cancel => m_Wrapper.m_UI_Cancel;
         public InputAction @OpenMap => m_Wrapper.m_UI_OpenMap;
+        public InputAction @SkipVideo => m_Wrapper.m_UI_SkipVideo;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -991,6 +1025,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @OpenMap.started += instance.OnOpenMap;
             @OpenMap.performed += instance.OnOpenMap;
             @OpenMap.canceled += instance.OnOpenMap;
+            @SkipVideo.started += instance.OnSkipVideo;
+            @SkipVideo.performed += instance.OnSkipVideo;
+            @SkipVideo.canceled += instance.OnSkipVideo;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
@@ -1025,6 +1062,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @OpenMap.started -= instance.OnOpenMap;
             @OpenMap.performed -= instance.OnOpenMap;
             @OpenMap.canceled -= instance.OnOpenMap;
+            @SkipVideo.started -= instance.OnSkipVideo;
+            @SkipVideo.performed -= instance.OnSkipVideo;
+            @SkipVideo.canceled -= instance.OnSkipVideo;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -1065,5 +1105,6 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         void OnRightClick(InputAction.CallbackContext context);
         void OnCancel(InputAction.CallbackContext context);
         void OnOpenMap(InputAction.CallbackContext context);
+        void OnSkipVideo(InputAction.CallbackContext context);
     }
 }

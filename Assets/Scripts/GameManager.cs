@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
-        SceneManager.LoadScene("Level1"); // İlk bölümü başlatır
+        SceneManager.LoadScene("mete"); // İlk bölümü başlatır
     }
 
     public void ToggleOptions()

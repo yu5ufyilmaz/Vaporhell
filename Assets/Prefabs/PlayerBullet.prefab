@@ -162,5 +162,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damage: 10
-  lifeTime: 5
+  lifeTime: 0.8
   isEnemyBullet: 0
