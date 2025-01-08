@@ -2797,15 +2797,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_RenderShadows: 1
+  m_RenderShadows: 0
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
   m_Cameras: []
-  m_RendererIndex: -1
+  m_RendererIndex: 0
   m_VolumeLayerMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 0
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
   m_RenderPostProcessing: 0
@@ -2839,7 +2839,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -80903,6 +80903,26 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 1274296055763877375, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1274296055763877375, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1274296055763877375, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1274296055763877375, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1274296055763877375, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2260406008785062426, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
       propertyPath: m_Name
       value: UIController
@@ -81007,6 +81027,50 @@ PrefabInstance:
     - target: {fileID: 1605945386542671820, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 1605945386542671820, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_Intensity
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_NormalMapQuality
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_OverlapOperation
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_ApplyToSortingLayers.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_ApplyToSortingLayers.Array.data[0]
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_ApplyToSortingLayers.Array.data[1]
+      value: 1289398051
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_ApplyToSortingLayers.Array.data[2]
+      value: 826532111
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_ApplyToSortingLayers.Array.data[3]
+      value: -1116907353
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_ApplyToSortingLayers.Array.data[4]
+      value: 89715853
+      objectReference: {fileID: 0}
+    - target: {fileID: 1678158713509200234, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: m_ApplyToSortingLayers.Array.data[5]
+      value: -110902175
       objectReference: {fileID: 0}
     - target: {fileID: 6287942756057196882, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
       propertyPath: m_LocalPosition.x
