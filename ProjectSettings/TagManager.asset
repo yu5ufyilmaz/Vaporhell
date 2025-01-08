@@ -22,7 +22,7 @@ TagManager:
   - Projectile
   - Minimap
   - Enemy
-  - 
+  - Sis
   - 
   - 
   - 
@@ -59,4 +59,7 @@ TagManager:
     locked: 0
   - name: Tilemap
     uniqueID: 4184065121
+    locked: 0
+  - name: Sis
+    uniqueID: 1681847229
     locked: 0
