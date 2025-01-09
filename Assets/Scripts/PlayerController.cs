@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     private static readonly int IsFalling = Animator.StringToHash("isFalling");
     private static readonly int IsClimbingParam = Animator.StringToHash("isClimbing");
     private static readonly int IsOnRope = Animator.StringToHash("isOnRope");
+    private static readonly int ClimbSpeed = Animator.StringToHash("climbSpeed");
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -58,20 +59,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float bottomRayOffsetY = 0.5f;   // Alt yatay ray Y offset
     private float verticalRayStartOffset = -0.2f;
 
-    
     [SerializeField] private float horizontalRayOriginOffsetY = 1.2f; 
     [SerializeField] private float horizontalRayDistance = 1.2f;      
     [SerializeField] private float verticalRayOriginOffsetY = 0.2f;   
     [SerializeField] private float verticalRayDistance = 2.5f;        
     [SerializeField] private float climbDuration = 0.6f;              
-    [SerializeField] private float climbTopOffset = 0.5f;      
-    
+    [SerializeField] private float climbTopOffset = 0.5f;     
+
     [Header("Rope Climb Parameters")]
     [SerializeField] private float climbSpeed = 5f;
     [SerializeField] private LayerMask ropeLayer;
     private bool isOnRope = false;
     private bool isClimbingRope = false;
-
+    private bool isOnDropThroughPlatform = false;
 
     // Movement Parameters
     [Header("Movement Parameters")]
@@ -133,6 +133,7 @@ public class PlayerController : MonoBehaviour
     private InputAction jumpAction;
     private InputAction rollAction;
     private InputAction crouchAction;
+    private InputAction dropAction;
 
     // Yeni Değişken: Önceki zemin durumu
     private bool previousIsGrounded;
@@ -145,6 +146,7 @@ public class PlayerController : MonoBehaviour
         rollAction = playerInput.actions["Roll"];
         crouchAction = playerInput.actions["Crouch"];
         teleportAction = playerInput.actions["Teleport"];
+        dropAction = playerInput.actions["Drop"];
     }
 
     void Start()
@@ -172,6 +174,17 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        
+        if (dropAction.triggered)
+        {
+            Debug.Log("[DEBUG] Drop Action tetiklendi.");
+            if (isOnDropThroughPlatform)
+            {
+                DropThroughPlatform();
+            }
+        }
+
+
         if (_isDead || isClimbing)
         {
             // Tırmanma veya roll sırasında normal inputlar iptal
@@ -195,10 +208,10 @@ public class PlayerController : MonoBehaviour
         {
             HandleMovement();
         }
+       
 
         ShowVerticalRayForDebugAlways();
         CheckWall();
-        HandleRopeClimb();
         HandleWallSlide();
         HandleJump();
         HandleShoot();
@@ -206,6 +219,7 @@ public class PlayerController : MonoBehaviour
         HandleCrouch();
         UpdateFirePointPosition();
         HandleTeleport();
+        HandleRopeClimb();
 
         // Çoklu ray ledge grab
         HandleLedgeGrabRaycast_MultiRay();
@@ -474,18 +488,23 @@ public class PlayerController : MonoBehaviour
         if (_isDead || isRolling || !canShoot || isShooting) return;
 
         Vector2 moveInput = playerInput.actions["Move"].ReadValue<Vector2>();
-        bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
-        float currentSpeed = playerInput.actions["Run"].IsPressed() ? moveSpeed * runSpeedMultiplier : moveSpeed;
 
-        _rb.velocity = new Vector2(moveInput.x * currentSpeed, _rb.velocity.y);
-
-        if (moveInput.x != 0)
+        // Eğer rope üzerinde değilsek, normal hareket
+        if (!isOnRope)
         {
-            _spriteRenderer.flipX = moveInput.x > 0;
-        }
+            bool isMoving = Mathf.Abs(moveInput.x) > 0.1f;
+            float currentSpeed = playerInput.actions["Run"].IsPressed() ? moveSpeed * runSpeedMultiplier : moveSpeed;
 
-        animator.SetBool(IsMoving, isMoving);
-        UpdateCinemachineOffset(isMoving);
+            _rb.velocity = new Vector2(moveInput.x * currentSpeed, _rb.velocity.y);
+
+            if (moveInput.x != 0)
+            {
+                _spriteRenderer.flipX = moveInput.x > 0;
+            }
+
+            animator.SetBool(IsMoving, isMoving);
+            UpdateCinemachineOffset(isMoving);
+        }
     }
 
     private void HandleShoot()
@@ -595,30 +614,65 @@ public class PlayerController : MonoBehaviour
     
     private void HandleRopeClimb()
     {
-        if (!isOnRope) return;
+        if (!isOnRope) return; // Halatta değilse çıkış yap
 
-        Vector2 climbInput = playerInput.actions["Move"].ReadValue<Vector2>();
+        Vector2 moveInput = playerInput.actions["Move"].ReadValue<Vector2>();
 
-        // Yalnızca dikey eksende tırmanma hareketi
-        if (Mathf.Abs(climbInput.y) > 0.1f)
+        // Zıplama ile halattan çıkış
+        if (jumpAction.triggered)
+        {
+            Debug.Log("Halattan zıplama ile çıkış yapıldı.");
+            isOnRope = false;
+            animator.SetBool(IsOnRope, false);
+            isClimbingRope = false;
+            animator.SetFloat(ClimbSpeed, 0);
+            _rb.gravityScale = fallingGravityScale;
+
+            // Zıplama hareketi
+            _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
+            return;
+        }
+
+        // Yukarı/aşağı hareket
+        if (Mathf.Abs(moveInput.y) > 0.1f) 
         {
             isClimbingRope = true;
-            animator.SetBool(IsOnRope, true); // Tırmanma animasyonu varsa tetiklenir
-            _rb.velocity = new Vector2(0, climbInput.y * climbSpeed);
+            animator.SetBool(IsOnRope, true);
+            animator.SetFloat(ClimbSpeed, moveInput.y);
+
+            // Yukarı veya aşağı hareket
+            _rb.velocity = new Vector2(0, moveInput.y * climbSpeed);
         }
         else
         {
+            // Halatta sabit durma
             isClimbingRope = false;
-            animator.SetBool(IsOnRope, false);
+            animator.SetFloat(ClimbSpeed, 0);
             _rb.velocity = Vector2.zero;
         }
+
+        // Yere iniş kontrolü
+        if (isOnRope && IsGrounded())
+        {
+            Debug.Log("Halattan yere geçildi.");
+            ExitRope();
+        }
+    }
+
+    private void ExitRope()
+    {
+        isOnRope = false;
+        animator.SetBool(IsOnRope, false);
+        isClimbingRope = false;
+        animator.SetFloat(ClimbSpeed, 0);
+        _rb.gravityScale = normalGravityScale; // Yerçekimi normale döner
     }
 
 
 
     private void HandleCrouch()
     {
-        // Crouch yapılamayacak durumlar:
+        // Eğer crouch yapılamayacak bir durumdaysa, çıkış yap
         if (!_isGrounded || isRolling || _isDead || Mathf.Abs(_rb.velocity.y) > 0.1f)
         {
             if (isCrouching)
@@ -628,7 +682,14 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Crouch Action basılı tutuluyorsa EnterCrouch çağır
+        // Eğer S + Space kombinasyonu yapılırsa crouch devre dışı, drop işlevi devreye girer
+        if (Keyboard.current.sKey.isPressed && Keyboard.current.spaceKey.isPressed && isOnDropThroughPlatform)
+        {
+            DropThroughPlatform();
+            return; // Crouch işlevini devre dışı bırak
+        }
+
+        // Eğer sadece S tuşu basılıysa crouch işlevini sürdür
         if (crouchAction.IsPressed())
         {
             EnterCrouch();
@@ -638,6 +699,7 @@ public class PlayerController : MonoBehaviour
             ExitCrouch();
         }
     }
+
 
     private void EnterCrouch()
     {
@@ -692,6 +754,53 @@ public class PlayerController : MonoBehaviour
         framingTransposer.m_TrackedObjectOffset = targetOffset;
     }
 
+    private void DropThroughPlatform()
+    {
+        Collider2D platformCollider = GetPlatformCollider();
+        if (platformCollider != null)
+        {
+            StartCoroutine(DisablePlatformColliderTemporarily(platformCollider));
+        }
+    }
+
+    private Collider2D GetPlatformCollider()
+    {
+        Vector2 rayOrigin = groundCheck.position; // Ray'in başlangıç noktası
+        float rayDistance = -1.0f; // Ray mesafesi
+
+        Debug.DrawRay(rayOrigin, Vector2.down * rayDistance, Color.red); // Debug çizgisi
+
+        RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.down, rayDistance, groundMask);
+
+        if (hit.collider != null)
+        {
+            Debug.Log($"[DEBUG] Raycast çarptı: {hit.collider.name}, Tag: {hit.collider.tag}");
+            if (hit.collider.CompareTag("Drop"))
+            {
+                Debug.Log("[DEBUG] Uygun Drop platformu algılandı!");
+                return hit.collider;
+            }
+            else
+            {
+                Debug.Log($"[DEBUG] Çarpışma var ama uygun Tag değil: {hit.collider.tag}");
+            }
+        }
+        else
+        {
+            Debug.Log("[DEBUG] Raycast hiçbir şeyle çarpışmadı.");
+        }
+
+        return null;
+    }
+
+    private IEnumerator DisablePlatformColliderTemporarily(Collider2D platformCollider)
+    {
+        platformCollider.enabled = false;
+        yield return new WaitForSeconds(0.3f); // Karakterin platformdan aşağı inmesi için süre
+        platformCollider.enabled = true;
+    }
+
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
@@ -702,13 +811,20 @@ public class PlayerController : MonoBehaviour
             animator.SetBool(IsFalling, false);
             animator.SetBool(IsJumping, false);
         }
+        if (collision.gameObject.CompareTag("Drop"))
+        {
+            isOnDropThroughPlatform = true;
+            Debug.Log("[DEBUG] DropThroughPlatform üzerine çıkıldı.");
+        }
     }
 
     private void OnCollisionExit2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        
+        if (collision.gameObject.CompareTag("Drop"))
         {
-            // Bu metot artık zıplama sayısını sıfırlamıyor
+            isOnDropThroughPlatform = false;
+            Debug.Log("[DEBUG] DropThroughPlatform terk edildi.");
         }
     }
     
@@ -716,25 +832,29 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.CompareTag("Rope"))
         {
-            Debug.Log("Halata ulaşıldı, tırmanmaya hazır.");
+            Debug.Log("Halata ulaşıldı.");
+
+            // Karakteri hafif yukarı taşı
+            Vector3 ropeEntryPosition = new Vector3(transform.position.x, collision.transform.position.y + 0.5f, transform.position.z);
+            transform.position = ropeEntryPosition;
+
             isOnRope = true;
+            animator.SetBool(IsOnRope, true);
             _rb.gravityScale = 0f; // Yerçekimini devre dışı bırak
-            _rb.velocity = Vector2.zero; // Halat üzerindeyken hareket durdurulur
+            _rb.velocity = Vector2.zero; // Hareketi sıfırla
         }
     }
+
 
     private void OnTriggerExit2D(Collider2D collision)
     {
         if (collision.CompareTag("Rope"))
         {
             Debug.Log("Halattan çıkıldı.");
-            isOnRope = false;
-            isClimbingRope = false;
-            _rb.gravityScale = normalGravityScale; // Normal yerçekimi geri yüklenir
+            ExitRope();
         }
     }
-
-
+    
     private bool IsGrounded()
     {
         bool grounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundMask) != null;
@@ -813,4 +933,3 @@ public class PlayerController : MonoBehaviour
         Destroy(gameObject);
     }
 }
-

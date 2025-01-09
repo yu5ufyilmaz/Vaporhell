@@ -17,7 +17,7 @@ TagManager:
   - Water
   - UI
   - Ground
-  - Wall
+  - Rope
   - Player
   - Teleport
   - Projectile
@@ -25,7 +25,7 @@ TagManager:
   - Enemy
   - Sis
   - Light
-  - Rope
+  - 
   - 
   - 
   - 
