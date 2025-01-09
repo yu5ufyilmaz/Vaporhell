@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
     private static readonly int Shoot = Animator.StringToHash("Shoot");
     private static readonly int IsFalling = Animator.StringToHash("isFalling");
     private static readonly int IsClimbingParam = Animator.StringToHash("isClimbing");
+    private static readonly int IsOnRope = Animator.StringToHash("isOnRope");
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -57,12 +58,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float bottomRayOffsetY = 0.5f;   // Alt yatay ray Y offset
     private float verticalRayStartOffset = -0.2f;
 
+    
     [SerializeField] private float horizontalRayOriginOffsetY = 1.2f; 
     [SerializeField] private float horizontalRayDistance = 1.2f;      
     [SerializeField] private float verticalRayOriginOffsetY = 0.2f;   
     [SerializeField] private float verticalRayDistance = 2.5f;        
     [SerializeField] private float climbDuration = 0.6f;              
-    [SerializeField] private float climbTopOffset = 0.5f;            
+    [SerializeField] private float climbTopOffset = 0.5f;      
+    
+    [Header("Rope Climb Parameters")]
+    [SerializeField] private float climbSpeed = 5f;
+    [SerializeField] private LayerMask ropeLayer;
+    private bool isOnRope = false;
+    private bool isClimbingRope = false;
+
 
     // Movement Parameters
     [Header("Movement Parameters")]
@@ -189,6 +198,7 @@ public class PlayerController : MonoBehaviour
 
         ShowVerticalRayForDebugAlways();
         CheckWall();
+        HandleRopeClimb();
         HandleWallSlide();
         HandleJump();
         HandleShoot();
@@ -582,6 +592,28 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(rollCooldown);
         canRoll = true;
     }
+    
+    private void HandleRopeClimb()
+    {
+        if (!isOnRope) return;
+
+        Vector2 climbInput = playerInput.actions["Move"].ReadValue<Vector2>();
+
+        // Yalnızca dikey eksende tırmanma hareketi
+        if (Mathf.Abs(climbInput.y) > 0.1f)
+        {
+            isClimbingRope = true;
+            animator.SetBool(IsOnRope, true); // Tırmanma animasyonu varsa tetiklenir
+            _rb.velocity = new Vector2(0, climbInput.y * climbSpeed);
+        }
+        else
+        {
+            isClimbingRope = false;
+            animator.SetBool(IsOnRope, false);
+            _rb.velocity = Vector2.zero;
+        }
+    }
+
 
 
     private void HandleCrouch()
@@ -679,6 +711,29 @@ public class PlayerController : MonoBehaviour
             // Bu metot artık zıplama sayısını sıfırlamıyor
         }
     }
+    
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Rope"))
+        {
+            Debug.Log("Halata ulaşıldı, tırmanmaya hazır.");
+            isOnRope = true;
+            _rb.gravityScale = 0f; // Yerçekimini devre dışı bırak
+            _rb.velocity = Vector2.zero; // Halat üzerindeyken hareket durdurulur
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Rope"))
+        {
+            Debug.Log("Halattan çıkıldı.");
+            isOnRope = false;
+            isClimbingRope = false;
+            _rb.gravityScale = normalGravityScale; // Normal yerçekimi geri yüklenir
+        }
+    }
+
 
     private bool IsGrounded()
     {

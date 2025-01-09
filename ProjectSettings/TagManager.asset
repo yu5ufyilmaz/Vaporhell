@@ -8,6 +8,7 @@ TagManager:
   - PlayerBullet
   - Enemy
   - Wall
+  - Rope
   layers:
   - Default
   - TransparentFX
@@ -23,8 +24,8 @@ TagManager:
   - Minimap
   - Enemy
   - Sis
-  - 
-  - 
+  - Light
+  - Rope
   - 
   - 
   - 
