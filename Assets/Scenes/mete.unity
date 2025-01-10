@@ -1519,14 +1519,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2550101392098526566, guid: 61ac2af614fa9154d9e80208d40143c8, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2550101392098526566, guid: 61ac2af614fa9154d9e80208d40143c8, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 8356517525970073564, guid: 61ac2af614fa9154d9e80208d40143c8, type: 3}
       propertyPath: m_Name
       value: MechaBomb
@@ -83661,6 +83653,14 @@ PrefabInstance:
       propertyPath: healthBarUI
       value: 
       objectReference: {fileID: 1850819193}
+    - target: {fileID: 7936395422744097646, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: showDebugVertical
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7936395422744097646, guid: d4219c21092d57c44bbfe6f104091869, type: 3}
+      propertyPath: showDebugHorizontal
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
