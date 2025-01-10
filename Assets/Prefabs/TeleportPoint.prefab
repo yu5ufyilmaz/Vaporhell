@@ -58,7 +58,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 6.47, y: 6.47, z: 6.47}
+  m_LocalScale: {x: 12.76, y: 12.76, z: 12.76}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1972904416811660342}
@@ -216,8 +216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7d44f0f844290d4aa402710b3ce073d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  portalID: 2
-  spawnPoint: {fileID: 5954294893406915614}
+  teleportID: 1
 --- !u!58 &6721917956741736645
 CircleCollider2D:
   m_ObjectHideFlags: 0
