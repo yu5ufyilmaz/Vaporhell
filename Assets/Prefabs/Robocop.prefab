@@ -141,7 +141,7 @@ MonoBehaviour:
   maxHealth: 100
   currentHealth: 0
   patrolSpeed: 2
-  chaseSpeed: 3.5
+  chaseSpeed: 10
   waitTimeAtEdge: 1
   detectionRange: 10
   damage: 15
@@ -448,7 +448,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 4752275787699417923, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 30e416aeed5fc4649b1b8130db956c73, type: 3}

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -23,13 +24,30 @@ public class FinalBossController : MonoBehaviour
     [SerializeField] private float waveCooldown = 5f; // Dalga arası bekleme süresi
     [SerializeField] private int finalWaveHealth = 1; // Son dalga canı
 
+    [Header("UI Parameters")]
+    [SerializeField] private Slider healthBar; // Can göstergesi için Slider
+
     private int currentWaveIndex = 0;
     private int currentHealth;
     private bool isFinalWave = false;
+    private int remainingEnemiesInWave = 0; // O anki dalgadaki kalan düşman sayısı
 
     void Start()
     {
         currentHealth = waves.Count; // Dalga sayısına göre boss canı
+        Debug.Log($"Başlangıç: Final Boss canı: {currentHealth}, toplam dalga: {waves.Count}");
+
+        // UI ayarları
+        if (healthBar != null)
+        {
+            healthBar.maxValue = waves.Count;
+            healthBar.value = currentHealth;
+        }
+        else
+        {
+            Debug.LogWarning("FinalBossController: Health bar Slider atanmadı!");
+        }
+
         StartCoroutine(SpawnWave());
     }
 
@@ -38,27 +56,36 @@ public class FinalBossController : MonoBehaviour
         while (currentWaveIndex < waves.Count)
         {
             Wave currentWave = waves[currentWaveIndex];
-            Debug.Log($"Wave {currentWaveIndex + 1} başlıyor!");
+            Debug.Log($"Dalga {currentWaveIndex + 1} başlıyor! Dalga için düşman sayısı hesaplanıyor...");
 
+            // Dalga için toplam düşman sayısını hesapla
+            remainingEnemiesInWave = 0;
             foreach (var enemyData in currentWave.enemiesToSpawn)
             {
+                remainingEnemiesInWave += enemyData.spawnCount;
                 SpawnEnemies(enemyData);
             }
+            Debug.Log($"Dalga {currentWaveIndex + 1}: Toplam {remainingEnemiesInWave} düşman spawnlandı.");
 
-            // Dalga sonu bekleme
-            yield return new WaitForSeconds(waveCooldown);
+            // Dalganın bitmesini bekle
+            yield return new WaitUntil(() => remainingEnemiesInWave <= 0);
+            Debug.Log($"Dalga {currentWaveIndex + 1} tamamlandı! Kalan düşman: {remainingEnemiesInWave}");
 
-            // Dalga tamamlanınca can azalt
+            // Dalga bitiminde can azalt
             currentHealth--;
+            Debug.Log($"Final Boss canı azaldı: {currentHealth}");
+            UpdateHealthUI();
 
-            // Eğer son dalgadaysa final durumu başlat
+            // Eğer son dalgaysa final durumuna geç
             if (currentWaveIndex == waves.Count - 1)
             {
                 isFinalWave = true;
+                Debug.Log("Son dalga! Final Boss vurulabilir durumda.");
                 break;
             }
 
             currentWaveIndex++;
+            yield return new WaitForSeconds(waveCooldown);
         }
     }
 
@@ -67,7 +94,31 @@ public class FinalBossController : MonoBehaviour
         for (int i = 0; i < enemyData.spawnCount; i++)
         {
             int randomSpawnIndex = Random.Range(0, spawnPoints.Length);
-            Instantiate(enemyData.enemyPrefab, spawnPoints[randomSpawnIndex].position, Quaternion.identity);
+            GameObject spawnedEnemy = Instantiate(enemyData.enemyPrefab, spawnPoints[randomSpawnIndex].position, Quaternion.identity);
+
+            // Spawn edilen düşmana FinalBossController'ı bildir
+            EnemyBase enemyBase = spawnedEnemy.GetComponent<EnemyBase>();
+            if (enemyBase != null)
+            {
+                enemyBase.SetFinalBossController(this);
+            }
+
+            Debug.Log($"Spawn edilen düşman: {enemyData.enemyPrefab.name} | Spawn noktası: {spawnPoints[randomSpawnIndex].position}");
+        }
+    }
+
+    public void EnemyKilled()
+    {
+        remainingEnemiesInWave--; // Ölen düşmanı say
+        Debug.Log($"Bir düşman öldü! Kalan düşman sayısı: {remainingEnemiesInWave}");
+    }
+
+    private void UpdateHealthUI()
+    {
+        if (healthBar != null)
+        {
+            healthBar.value = currentHealth;
+            Debug.Log($"Health bar güncellendi: {currentHealth}/{waves.Count}");
         }
     }
 
@@ -78,6 +129,7 @@ public class FinalBossController : MonoBehaviour
             // Son vuruş yapılabilir
             if (Input.GetMouseButtonDown(0)) // Sol tık
             {
+                Debug.Log("Final Boss öldürülmeye hazır! Sol tık ile vurabilirsiniz.");
                 Die();
             }
         }
@@ -87,14 +139,5 @@ public class FinalBossController : MonoBehaviour
     {
         Debug.Log("Final Boss öldü!");
         Destroy(gameObject); // Boss yok olur
-    }
-
-    public void EnemyKilled()
-    {
-        if (!isFinalWave)
-        {
-            currentHealth--;
-            Debug.Log($"Boss'un canı: {currentHealth}");
-        }
     }
 }

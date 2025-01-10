@@ -7,11 +7,17 @@ public class EnemyBase : MonoBehaviour
     [HideInInspector] public int currentHealth;
 
     private bool isAlerted = false;
+    private FinalBossController finalBossController;
 
     protected virtual void Start()
     {
-        // Tüm düşmanlar, Start'ta kendi maxHealth değerine göre full can başlasın
         currentHealth = maxHealth;
+    }
+
+    public void SetFinalBossController(FinalBossController controller)
+    {
+        finalBossController = controller;
+        Debug.Log($"EnemyBase: FinalBossController ayarlandı. {gameObject.name}");
     }
 
     public virtual void TakeDamage(int damageAmount)
@@ -32,6 +38,14 @@ public class EnemyBase : MonoBehaviour
     protected virtual void Die()
     {
         Debug.Log($"{gameObject.name} öldü!");
+        
+        // FinalBossController'a bildir
+        if (finalBossController != null)
+        {
+            Debug.Log($"{gameObject.name} öldü ve FinalBossController bilgilendiriliyor.");
+            finalBossController.EnemyKilled();
+        }
+
         Destroy(gameObject, 0.1f);
     }
 
@@ -44,4 +58,3 @@ public class EnemyBase : MonoBehaviour
         }
     }
 }
-

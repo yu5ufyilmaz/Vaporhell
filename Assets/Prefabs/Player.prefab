@@ -325,8 +325,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b201a83c1bdb9748809bc37fedb15bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugHorizontal: 1
-  showDebugVertical: 1
+  showDebugHorizontal: 0
+  showDebugVertical: 0
   maxHealth: 100
   healthBarUI: {fileID: 0}
   bulletPrefab: {fileID: 6293327077710079278, guid: c2fe9a5edd7930a48966192fbf1b8e70, type: 3}
@@ -341,6 +341,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   teleportIndicatorPrefab: {fileID: 6585285352374972832, guid: 0777f7cf6812ab2449d9339c3debc01f, type: 3}
+  teleportMapManager: {fileID: 0}
   groundMask:
     serializedVersion: 2
     m_Bits: 32832
