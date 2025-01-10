@@ -50,6 +50,7 @@ public class PlayerController : MonoBehaviour
     private bool canTeleport = true;
     private InputAction teleportAction;
     private GameObject currentTeleportIndicator;
+    [SerializeField] private TeleportMapManager teleportMapManager;
 
     [Header("Ledge Climb Parameters")]
     [SerializeField] private LayerMask groundMask;
@@ -65,6 +66,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float verticalRayDistance = 2.5f;        
     [SerializeField] private float climbDuration = 0.6f;              
     [SerializeField] private float climbTopOffset = 0.5f;     
+    
 
     [Header("Rope Climb Parameters")]
     [SerializeField] private float climbSpeed = 5f;
@@ -73,6 +75,7 @@ public class PlayerController : MonoBehaviour
     private bool isClimbingRope = false;
     private bool isOnDropThroughPlatform = false;
 
+    [SerializeField] private float jumpOffRopeForce = 8f;
     // Movement Parameters
     [Header("Movement Parameters")]
     [SerializeField] private float moveSpeed = 10f;
@@ -134,6 +137,9 @@ public class PlayerController : MonoBehaviour
     private InputAction rollAction;
     private InputAction crouchAction;
     private InputAction dropAction;
+    private InputAction interactAction;
+    
+    private TeleportPoint nearbyTeleportPoint = null;
 
     // Yeni Değişken: Önceki zemin durumu
     private bool previousIsGrounded;
@@ -147,6 +153,7 @@ public class PlayerController : MonoBehaviour
         crouchAction = playerInput.actions["Crouch"];
         teleportAction = playerInput.actions["Teleport"];
         dropAction = playerInput.actions["Drop"];
+        interactAction = playerInput.actions["Interaction"];
     }
 
     void Start()
@@ -170,20 +177,17 @@ public class PlayerController : MonoBehaviour
 
         // Başlangıçta önceki zemin durumu
         previousIsGrounded = IsGrounded();
+        
+        interactAction.performed += OnInteractPerformed;
     }
 
     private void Update()
     {
         
-        if (dropAction.triggered)
+        if (isOnDropThroughPlatform && dropAction.triggered)
         {
-            Debug.Log("[DEBUG] Drop Action tetiklendi.");
-            if (isOnDropThroughPlatform)
-            {
-                DropThroughPlatform();
-            }
+            DropThroughPlatform();
         }
-
 
         if (_isDead || isClimbing)
         {
@@ -225,6 +229,19 @@ public class PlayerController : MonoBehaviour
         HandleLedgeGrabRaycast_MultiRay();
 
         HandleFalling();
+    }
+    
+    private void OnInteractPerformed(InputAction.CallbackContext context)
+    {
+        if (nearbyTeleportPoint != null)
+        {
+            // Teleport haritasını aç
+            teleportMapManager.OpenTeleportMap();
+        }
+        else
+        {
+            Debug.LogWarning("PlayerController: Yakında bir teleport noktası yok.");
+        }
     }
 
     private void ShowVerticalRayForDebugAlways()
@@ -419,24 +436,48 @@ public class PlayerController : MonoBehaviour
         if (isCrouching || !canShoot || isShooting || isClimbing)
             return;
 
-        if (jumpAction.triggered && remainingJumps > 0)
+        if (jumpAction.triggered)
         {
-            _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
-            remainingJumps--;
-            hasJumped = true;
-            _rb.gravityScale = fallingGravityScale;
-
-            if (remainingJumps == maxJumps - 1)
+            if (isOnRope)
             {
-                animator.SetBool(IsJumping, true);
+                JumpOffRope();
             }
-            else if (remainingJumps < maxJumps - 1)
+            else if (remainingJumps > 0)
             {
-                animator.SetBool(IsJumping, false);
-                animator.SetBool(IsJumping, true);
+                _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
+                remainingJumps--;
+                hasJumped = true;
+                _rb.gravityScale = fallingGravityScale;
+
+                if (remainingJumps == maxJumps - 1)
+                {
+                    animator.SetBool(IsJumping, true);
+                }
+                else if (remainingJumps < maxJumps - 1)
+                {
+                    animator.SetBool(IsJumping, false);
+                    animator.SetBool(IsJumping, true);
+                }
             }
         }
     }
+private void JumpOffRope()
+{
+    isOnRope = false;
+    isClimbingRope = false;
+    animator.SetBool(IsOnRope, false);
+    animator.SetFloat(ClimbSpeed, 0);
+    _rb.gravityScale = fallingGravityScale;
+
+    // Zıplama kuvvetini uygula
+    _rb.velocity = new Vector2(_rb.velocity.x, jumpOffRopeForce);
+
+    // Opsiyonel: Zıplama animasyonunu tetikle
+    animator.SetTrigger(IsJumping);
+
+    Debug.Log("[DEBUG] Halattan zıplandı.");
+}
+
 
     private void CheckWall()
     {
@@ -614,58 +655,28 @@ public class PlayerController : MonoBehaviour
     
     private void HandleRopeClimb()
     {
-        if (!isOnRope) return; // Halatta değilse çıkış yap
+        if (!isOnRope) return; // Eğer halatta değilse bu metodu tamamen geç
 
         Vector2 moveInput = playerInput.actions["Move"].ReadValue<Vector2>();
 
-        // Zıplama ile halattan çıkış
-        if (jumpAction.triggered)
-        {
-            Debug.Log("Halattan zıplama ile çıkış yapıldı.");
-            isOnRope = false;
-            animator.SetBool(IsOnRope, false);
-            isClimbingRope = false;
-            animator.SetFloat(ClimbSpeed, 0);
-            _rb.gravityScale = fallingGravityScale;
-
-            // Zıplama hareketi
-            _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
-            return;
-        }
-
         // Yukarı/aşağı hareket
-        if (Mathf.Abs(moveInput.y) > 0.1f) 
+        if (Mathf.Abs(moveInput.y) > 0.1f) // Yukarı veya aşağı hareket varsa
         {
             isClimbingRope = true;
-            animator.SetBool(IsOnRope, true);
-            animator.SetFloat(ClimbSpeed, moveInput.y);
+            animator.SetBool(IsOnRope, true); // Halat üzerinde olduğumuzu belirt
+            animator.SetFloat(ClimbSpeed, moveInput.y); // Yukarı çıkma animasyonu için hız parametresini gönder
 
-            // Yukarı veya aşağı hareket
-            _rb.velocity = new Vector2(0, moveInput.y * climbSpeed);
+            _rb.velocity = new Vector2(0, moveInput.y * climbSpeed); // Dikey eksende hareket
         }
         else
         {
-            // Halatta sabit durma
             isClimbingRope = false;
-            animator.SetFloat(ClimbSpeed, 0);
-            _rb.velocity = Vector2.zero;
-        }
 
-        // Yere iniş kontrolü
-        if (isOnRope && IsGrounded())
-        {
-            Debug.Log("Halattan yere geçildi.");
-            ExitRope();
+            // Halatta sabit durma
+            animator.SetFloat(ClimbSpeed, 0); // Sabit dururken climbSpeed'i sıfır yap
+            animator.SetBool(IsOnRope, true); // Hâlâ halat üzerinde olduğumuzu belirt
+            _rb.velocity = new Vector2(0, 0); // Hareketi durdur
         }
-    }
-
-    private void ExitRope()
-    {
-        isOnRope = false;
-        animator.SetBool(IsOnRope, false);
-        isClimbingRope = false;
-        animator.SetFloat(ClimbSpeed, 0);
-        _rb.gravityScale = normalGravityScale; // Yerçekimi normale döner
     }
 
 
@@ -792,7 +803,6 @@ public class PlayerController : MonoBehaviour
 
         return null;
     }
-
     private IEnumerator DisablePlatformColliderTemporarily(Collider2D platformCollider)
     {
         platformCollider.enabled = false;
@@ -814,7 +824,6 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Drop"))
         {
             isOnDropThroughPlatform = true;
-            Debug.Log("[DEBUG] DropThroughPlatform üzerine çıkıldı.");
         }
     }
 
@@ -824,37 +833,48 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Drop"))
         {
             isOnDropThroughPlatform = false;
-            Debug.Log("[DEBUG] DropThroughPlatform terk edildi.");
         }
     }
+    
+    
     
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Rope"))
         {
             Debug.Log("Halata ulaşıldı.");
-
-            // Karakteri hafif yukarı taşı
-            Vector3 ropeEntryPosition = new Vector3(transform.position.x, collision.transform.position.y + 0.5f, transform.position.z);
-            transform.position = ropeEntryPosition;
-
             isOnRope = true;
-            animator.SetBool(IsOnRope, true);
-            _rb.gravityScale = 0f; // Yerçekimini devre dışı bırak
-            _rb.velocity = Vector2.zero; // Hareketi sıfırla
+            _rb.gravityScale = 0f; // Yerçekimi devre dışı
+            _rb.velocity = Vector2.zero; // Hareket durdurulur
+        }
+
+        TeleportPoint teleportPoint = collision.GetComponent<TeleportPoint>();
+        if (teleportPoint != null)
+        {
+            nearbyTeleportPoint = teleportPoint;
+            Debug.Log($"PlayerController: Yakında bir teleport noktası bulundu: {teleportPoint.TeleportID}");
         }
     }
-
 
     private void OnTriggerExit2D(Collider2D collision)
     {
         if (collision.CompareTag("Rope"))
         {
             Debug.Log("Halattan çıkıldı.");
-            ExitRope();
+            isOnRope = false;
+            animator.SetBool(IsOnRope, false);
+            isClimbingRope = false;
+            animator.SetFloat(ClimbSpeed, 0);
+            _rb.gravityScale = normalGravityScale; // Yerçekimi normale döner
+        }
+
+        TeleportPoint teleportPoint = collision.GetComponent<TeleportPoint>();
+        if (teleportPoint != null && teleportPoint == nearbyTeleportPoint)
+        {
+            nearbyTeleportPoint = null;
+            Debug.Log($"PlayerController: Yakındaki teleport noktasından uzaklaşıldı: {teleportPoint.TeleportID}");
         }
     }
-    
     private bool IsGrounded()
     {
         bool grounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundMask) != null;
@@ -878,23 +898,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     public void TeleportTo(Vector3 targetPosition)
     {
-        // Opsiyonel: Teleport animasyonu, efekt vb.
-        // Örnek: Karakterin velocity'sini sıfırla
         if (_rb != null)
         {
             _rb.velocity = Vector2.zero;
         }
 
-        // Pozisyonu ayarla
         transform.position = targetPosition;
 
-        // Opsiyonel: Bir animasyon (fade out / fade in) oynatılabilir
-        // _animator.SetTrigger("Teleport");
-
-        // vs. ek efektler
     }
 
     public void Heal(int healAmount)
