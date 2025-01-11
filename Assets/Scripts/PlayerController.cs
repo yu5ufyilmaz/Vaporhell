@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 using Cinemachine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -953,5 +954,6 @@ private void JumpOffRope()
     {
         yield return new WaitForSeconds(5f);
         Destroy(gameObject);
+        SceneManager.LoadScene("MainMenu");
     }
 }

@@ -165,7 +165,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96c94254c6fcba447bbc5651c72c23a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 70
+  maxHealth: 30
   currentHealth: 0
   grenadePrefab: {fileID: 2557039937821784451, guid: e8cb918cbc911f1459c6d4468b3e0e6e, type: 3}
   firePoint: {fileID: 6395371907683168198}

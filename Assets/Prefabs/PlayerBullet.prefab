@@ -162,8 +162,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52207f8d1e6516140a4c078992f3e01b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 10
-  lifeTime: 0.4
+  damage: 30
+  lifeTime: 1
   isEnemyBullet: 0
 --- !u!114 &1150691360310524148
 MonoBehaviour:

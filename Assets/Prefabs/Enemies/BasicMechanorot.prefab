@@ -160,7 +160,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e01abce155ac823478d4cbd15c93c15c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 60
+  maxHealth: 30
   currentHealth: 0
   moveSpeed: 3
   detectionRange: 10
@@ -171,6 +171,11 @@ MonoBehaviour:
   minPatrolDistance: 1.5
   waitTimeAtPatrolPoint: 2
   runSpeedMultiplier: 1.5
+  groundCheckDistance: 2
+  groundCheck: {fileID: 2934336127084906593}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
   healthBarPrefab: {fileID: 8382789295525882154}
   healthBarDisplayDuration: 1
 --- !u!95 &-6312883676314535365
@@ -230,7 +235,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 20, y: 30.007326}
+    oldSize: {x: 20.009768, y: 30.000002}
     newSize: {x: 20, y: 30.007326}
     adaptiveTilingThreshold: 0.5
     drawMode: 0

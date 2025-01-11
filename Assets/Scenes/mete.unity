@@ -1072,7 +1072,7 @@ Transform:
   m_GameObject: {fileID: 211560926}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -68.7, y: -13.600001, z: 5.3294926}
+  m_LocalPosition: {x: -68.7, y: -16, z: 5.3294926}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -2811,7 +2811,7 @@ Transform:
   m_GameObject: {fileID: 704663855}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -68.7, y: -13.600001, z: 5.3294926}
+  m_LocalPosition: {x: -68.7, y: -16, z: 5.3294926}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -5818,7 +5818,7 @@ Transform:
   m_GameObject: {fileID: 1498294814}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -68.7, y: -13.600001, z: 5.3294926}
+  m_LocalPosition: {x: -68.7, y: -16, z: 5.3294926}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -122298,6 +122298,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1516989193429177171, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: RestartGame
+      objectReference: {fileID: 0}
     - target: {fileID: 2260406008785062426, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
       propertyPath: m_Name
       value: UIController
@@ -122381,6 +122385,10 @@ PrefabInstance:
     - target: {fileID: 6544851865259866035, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6854322928089595939, guid: b2b233a233e11394e80e5faf0343292a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: MainMenu
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

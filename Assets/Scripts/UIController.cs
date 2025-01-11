@@ -180,4 +180,17 @@ public class UIController : MonoBehaviour
         optionsPanel.SetActive(false);
     }
     
+    public void RestartGame()
+    {
+        Time.timeScale = 1; // Oyunu yeniden başlatmadan önce zamanı sıfırdan çıkar
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name); // Mevcut sahneyi yeniden yükle
+        pauseMenuUI.SetActive(false);
+    }
+
+    public void MainMenu()
+    {
+        Time.timeScale = 1;
+        SceneManager.LoadScene("MainMenu");
+    }
+    
 }
