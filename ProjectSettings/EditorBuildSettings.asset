@@ -9,10 +9,19 @@ EditorBuildSettings:
     path: Assets/Scenes/StartScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: b0555f7a20abe3d41a1407b09f9e7d58
+  - enabled: 1
     path: Assets/Scenes/IntroScene.unity
     guid: acae9f844a010514d85af70229953be0
   - enabled: 1
     path: Assets/Scenes/mete.unity
     guid: 7e069f842a92ea14c96bc5686414c6bf
+  - enabled: 1
+    path: Assets/Scenes/Underground.unity
+    guid: a7e38ff6ab31f5640a88019fb2a9603d
+  - enabled: 1
+    path: Assets/Scenes/Boss.unity
+    guid: 81c36eb7e0fc19d4698b92dd99ef6a6d
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 147606f9203650b489c5b6ec55e7b02f, type: 2}

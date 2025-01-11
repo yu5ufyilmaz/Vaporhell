@@ -10,6 +10,7 @@ TagManager:
   - Wall
   - Rope
   - Drop
+  - DeathZone
   layers:
   - Default
   - TransparentFX

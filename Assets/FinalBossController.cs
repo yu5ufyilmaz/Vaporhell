@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem; // Yeni Input System için gerekli
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 [System.Serializable]
 public class Wave
@@ -26,6 +28,9 @@ public class FinalBossController : MonoBehaviour
 
     [Header("UI Parameters")]
     [SerializeField] private Slider healthBar; // Can göstergesi için Slider
+
+    [Header("Input System")]
+    [SerializeField] private InputActionReference attackAction; // Attack eylemi için referans
 
     private int currentWaveIndex = 0;
     private int currentHealth;
@@ -126,8 +131,8 @@ public class FinalBossController : MonoBehaviour
     {
         if (isFinalWave && currentHealth <= 0)
         {
-            // Son vuruş yapılabilir
-            if (Input.GetMouseButtonDown(0)) // Sol tık
+            // Yeni Input System üzerinden sol tık kontrolü
+            if (attackAction.action.triggered) // InputActionReference üzerinden tetikleme kontrolü
             {
                 Debug.Log("Final Boss öldürülmeye hazır! Sol tık ile vurabilirsiniz.");
                 Die();
@@ -139,5 +144,6 @@ public class FinalBossController : MonoBehaviour
     {
         Debug.Log("Final Boss öldü!");
         Destroy(gameObject); // Boss yok olur
+        SceneManager.LoadScene("MainMenu");
     }
 }

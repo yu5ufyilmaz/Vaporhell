@@ -25,6 +25,7 @@ public class PlayerController : MonoBehaviour
     
     [Header("Sounds")]
     [SerializeField] private AudioClip jumpSound;
+    [SerializeField] private AudioClip shootSound;
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -51,7 +52,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask teleportObstacleMask;
     [SerializeField] private GameObject teleportIndicatorPrefab;
     private bool canTeleport = true;
-    private InputAction teleportAction;
     private GameObject currentTeleportIndicator;
     [SerializeField] private TeleportMapManager teleportMapManager;
 
@@ -154,7 +154,6 @@ public class PlayerController : MonoBehaviour
         jumpAction = playerInput.actions["Jump"];
         rollAction = playerInput.actions["Roll"];
         crouchAction = playerInput.actions["Crouch"];
-        teleportAction = playerInput.actions["Teleport"];
         dropAction = playerInput.actions["Drop"];
         interactAction = playerInput.actions["Interaction"];
     }
@@ -411,7 +410,7 @@ public class PlayerController : MonoBehaviour
             _rb.gravityScale = fallingGravityScale;
 
             // Düşme animasyonunu tetikler
-            if (_rb.velocity.y < -1.5f)
+            if (_rb.velocity.y < -2.5f)
             {
                 if (!animator.GetBool(IsFalling))
                 {
@@ -568,6 +567,7 @@ private void JumpOffRope()
         _rb.velocity = Vector2.zero;
         animator.SetTrigger(Shoot);
 
+        SoundManager.Instance.PlaySFX(shootSound);
         float shootAnimationDuration = 0.5f;
         yield return new WaitForSeconds(shootAnimationDuration);
 
@@ -591,7 +591,7 @@ private void JumpOffRope()
         if (!canTeleport || _isDead || isRolling || isClimbing) return;
 
         Vector2 moveInput = playerInput.actions["Move"].ReadValue<Vector2>();
-        if (teleportAction.triggered && moveInput != Vector2.zero)
+        if (interactAction.triggered && moveInput != Vector2.zero)
         {
             Vector2 teleportDirection = moveInput.normalized;
             Vector2 targetPosition = (Vector2)transform.position + (teleportDirection * teleportDistance);
@@ -857,6 +857,12 @@ private void JumpOffRope()
         {
             nearbyTeleportPoint = teleportPoint;
             Debug.Log($"PlayerController: Yakında bir teleport noktası bulundu: {teleportPoint.TeleportID}");
+        }
+        
+        if (collision.CompareTag("DeathZone"))
+        {
+            Debug.Log("Karakter ölüm alanına çarptı!");
+            Die(); // Karakter ölme davranışı
         }
     }
 

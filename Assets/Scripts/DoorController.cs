@@ -1,47 +1,82 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
+using UnityEngine.SceneManagement; // Sahne geçişleri için gerekli
 
 public class DoorController : MonoBehaviour
 {
-    public string nextSceneName; // Geçilecek sahne adı
-    public InputActionReference interactionInput; // Interaction Input Action
+    public string nextSceneName; // Geçilecek sahnenin adı
+    private EnemyBase[] enemies; // Sahnedeki düşmanları tutar
+    private Collider2D doorCollider; // Kapının Collider'ı
 
-    private bool isPlayerInRange = false;
-
-    private void Start()
+    void Start()
     {
-        // Interaction Input'u etkinleştir
-        interactionInput.action.Enable();
+        // Sahnedeki tüm EnemyBase script'lerini bul
+        enemies = FindObjectsOfType<EnemyBase>();
+        Debug.Log($"Kapı: {enemies.Length} düşman bulundu.");
+
+        // Kapının Collider bileşenini al ve başlangıçta devre dışı bırak
+        doorCollider = GetComponent<Collider2D>();
+        if (doorCollider != null)
+        {
+            doorCollider.enabled = false; // Trigger başlangıçta kapalı
+        }
+        else
+        {
+            Debug.LogError("Kapıya bir Collider bileşeni eklenmemiş!");
+        }
+    }
+
+    void Update()
+    {
+        // Tüm düşmanların öldüğünü kontrol et
+        if (AllEnemiesDefeated())
+        {
+            ActivateDoor();
+        }
+    }
+
+    private bool AllEnemiesDefeated()
+    {
+        foreach (var enemy in enemies)
+        {
+            if (enemy != null && enemy.currentHealth > 0)
+            {
+                return false; // Sağ kalan bir düşman var
+            }
+        }
+        return true; // Tüm düşmanlar öldü
+    }
+
+    private void ActivateDoor()
+    {
+        Debug.Log("Kapı açıldı! Tüm düşmanlar öldü, trigger aktif.");
+        
+        if (doorCollider != null)
+        {
+            doorCollider.enabled = true; // Kapı trigger'ını etkinleştir
+        }
+
+        // Artık Update'te kontrol etmeye gerek yok
+        enabled = false;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Oyuncu kapıya yaklaşırsa
         if (collision.CompareTag("Player"))
         {
-            isPlayerInRange = true;
-            Debug.Log("Player kapıya yaklaştı.");
+            Debug.Log("Oyuncu kapıya ulaştı. Sonraki sahneye geçiliyor.");
+            LoadNextScene();
         }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    private void LoadNextScene()
     {
-        // Oyuncu kapıdan uzaklaşırsa
-        if (collision.CompareTag("Player"))
+        if (!string.IsNullOrEmpty(nextSceneName))
         {
-            isPlayerInRange = false;
-            Debug.Log("Player kapıdan uzaklaştı.");
+            SceneManager.LoadScene(nextSceneName); // Belirtilen sahneyi yükle
         }
-    }
-
-    private void Update()
-    {
-        // Oyuncu menzildeyse ve Interaction tuşuna basılmışsa
-        if (isPlayerInRange && interactionInput.action.triggered)
+        else
         {
-            Debug.Log("Kapıya etkileşim gerçekleşti. Sahne değişiyor.");
-            SceneManager.LoadScene(nextSceneName);
+            Debug.LogError("Geçilecek sahne adı boş! 'nextSceneName' değişkenine bir sahne adı girin.");
         }
     }
 }

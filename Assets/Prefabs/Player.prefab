@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 1043801361786752484}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.084, y: -1.75, z: 0}
+  m_LocalPosition: {x: -0.084, y: -1.74, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -115,7 +115,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: defc2e000e3df3f4984830f642ad2620, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
+  m_FlipX: 1
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1, y: 2}
@@ -325,8 +325,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b201a83c1bdb9748809bc37fedb15bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugHorizontal: 0
-  showDebugVertical: 0
+  showDebugHorizontal: 1
+  showDebugVertical: 1
+  jumpSound: {fileID: 8300000, guid: 7a7c3542b7d0d814595653b370b2821f, type: 3}
+  shootSound: {fileID: 8300000, guid: 16812cb6f1ee8d841ab8d75fe2388ab8, type: 3}
   maxHealth: 100
   healthBarUI: {fileID: 0}
   bulletPrefab: {fileID: 6293327077710079278, guid: c2fe9a5edd7930a48966192fbf1b8e70, type: 3}
@@ -346,7 +348,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 32832
   topRayOffsetY: 1.2
-  bottomRayOffsetY: 0
+  bottomRayOffsetY: -0.8
   horizontalRayOriginOffsetY: 1.2
   horizontalRayDistance: 0.8
   verticalRayOriginOffsetY: 0.2
@@ -481,7 +483,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2406630862078046112
 Transform:
   m_ObjectHideFlags: 0

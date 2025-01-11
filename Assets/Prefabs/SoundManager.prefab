@@ -242,4 +242,4 @@ MonoBehaviour:
   sfxSource: {fileID: 5361480667436923952}
   bgMusic: {fileID: 8300000, guid: 7469635e7dffccf4491c3e13e7b9cc76, type: 3}
   musicVolume: 0.266
-  sfxVolume: 0.734
+  sfxVolume: 0.324
