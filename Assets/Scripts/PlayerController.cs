@@ -22,6 +22,9 @@ public class PlayerController : MonoBehaviour
     private static readonly int IsClimbingParam = Animator.StringToHash("isClimbing");
     private static readonly int IsOnRope = Animator.StringToHash("isOnRope");
     private static readonly int ClimbSpeed = Animator.StringToHash("climbSpeed");
+    
+    [Header("Sounds")]
+    [SerializeField] private AudioClip jumpSound;
 
     // Health Parameters
     [Header("Health Parameters")]
@@ -449,6 +452,7 @@ public class PlayerController : MonoBehaviour
                 hasJumped = true;
                 _rb.gravityScale = fallingGravityScale;
 
+                SoundManager.Instance.PlaySFX(jumpSound);
                 if (remainingJumps == maxJumps - 1)
                 {
                     animator.SetBool(IsJumping, true);

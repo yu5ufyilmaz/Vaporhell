@@ -8,19 +8,24 @@ public class SpiderBehavior : EnemyBase
 
     [Header("Spider Parameters")]
     public float detectionRange = 20f;       // Oyuncuyu algılama mesafesi
-    public float patrolSpeed = 2f;         // Devriye hızı
-    public float chaseSpeed = 4f;          // Kovalamaca hızı
-    public float explosionDelay = 1f;      // Patlama gecikmesi
-    public float waitTimeAtEdge = 1f;      // Kenarda bekleme süresi
-    public Transform groundCheck;          // Zemin kontrolü için referans
-    public float groundCheckDistance = 2f; // Zemin kontrol mesafesi
-    public LayerMask groundLayer;          // Zemin katmanı
+    public float patrolSpeed = 2f;           // Devriye hızı
+    public float chaseSpeed = 4f;            // Kovalamaca hızı
+    public float explosionDelay = 1f;        // Patlama gecikmesi
+    public float waitTimeAtEdge = 1f;        // Kenarda bekleme süresi
+    public Transform groundCheck;            // Zemin kontrolü için referans
+    public float groundCheckDistance = 2f;   // Zemin kontrol mesafesi
+    public LayerMask groundLayer;            // Zemin katmanı
 
-    private GameObject player; // Oyuncu referansı
-    private bool movingRight = true; // Hareket yönü
-    private Animator animator; // Animatör
-    private SpriteRenderer spriteRenderer; // Sprite yönü kontrolü
-    private bool isExploding = false; // Patlama durumu kontrolü
+    [Header("Wall Detection Parameters")]
+    public float wallCheckDistance = 1f;     // Duvar algılama mesafesi
+    public Transform wallCheck;              // Duvar kontrolü için referans
+    public LayerMask wallLayer;              // Duvar katmanı
+
+    private GameObject player;               // Oyuncu referansı
+    private bool movingRight = true;         // Hareket yönü
+    private Animator animator;               // Animatör
+    private SpriteRenderer spriteRenderer;   // Sprite yönü kontrolü
+    private bool isExploding = false;        // Patlama durumu kontrolü
     public SpiderDamageTrigger damageTrigger; // Hasar tetikleyici
 
     protected override void Start()
@@ -37,10 +42,17 @@ public class SpiderBehavior : EnemyBase
         {
             Debug.LogError("SpiderBehavior: DamageTrigger not found in children!");
         }
+
+        if (wallCheck == null)
+        {
+            Debug.LogError("SpiderBehavior: WallCheck transform is not assigned!");
+        }
     }
 
     void Update()
     {
+        hasFlippedThisFrame = false; // Her frame başında resetle
+
         if (isExploding) return;
 
         if (PlayerInRange())
@@ -89,19 +101,38 @@ public class SpiderBehavior : EnemyBase
         }
     }
 
-
+    private bool hasFlippedThisFrame = false;
 
     private void PatrolPlatform()
     {
+        if (isExploding) return;
+
         animator.SetBool(isWalking, true);
 
-        if (!IsGrounded())
+        bool grounded = IsGrounded();
+        bool wallAhead = IsWallAhead();
+
+        if (!grounded || wallAhead)
         {
             Flip();
         }
 
+        // Hareket et
         transform.Translate((movingRight ? Vector2.right : Vector2.left) * patrolSpeed * Time.deltaTime);
     }
+
+
+    private bool IsWallAhead()
+    {
+        Vector2 direction = movingRight ? Vector2.right : Vector2.left;
+        RaycastHit2D hit = Physics2D.Raycast(wallCheck.position, direction, wallCheckDistance, wallLayer);
+
+        Debug.DrawRay(wallCheck.position, direction * wallCheckDistance, Color.blue);
+        Debug.Log($"IsWallAhead called. Hit: {hit.collider != null}");
+
+        return hit.collider != null;
+    }
+
 
     private IEnumerator Explode()
     {
@@ -130,15 +161,19 @@ public class SpiderBehavior : EnemyBase
 
         Debug.DrawRay(originLeft, Vector2.down * groundCheckDistance, Color.red);
         Debug.DrawRay(originRight, Vector2.down * groundCheckDistance, Color.red);
+        Debug.Log($"IsGrounded called. groundedLeft: {groundedLeft}, groundedRight: {groundedRight}");
 
         return groundedLeft || groundedRight;
     }
+
 
     private void Flip()
     {
         movingRight = !movingRight;
         spriteRenderer.flipX = !spriteRenderer.flipX;
+        Debug.Log($"Flip called. Now movingRight: {movingRight}");
     }
+
 
     protected override void Die()
     {
