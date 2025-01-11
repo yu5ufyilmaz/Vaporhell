@@ -20,6 +20,7 @@ public class MechaBombBehavior : EnemyBase
     public Transform groundCheck;
     public float groundCheckDistance = 2f;
     public LayerMask groundLayer;
+    private float rayCheckDistance = 3f;
 
     [Header("Health Bar Parameters")]
     public GameObject healthBarPrefab;           // Prefab ataması için
@@ -108,6 +109,13 @@ public class MechaBombBehavior : EnemyBase
             Flip();
         }
 
+        // Eğer duvar algılanırsa yön değiştir
+        if (IsWallAhead())
+        {
+            Flip();
+            Debug.Log("MechaBomb: Wall detected while shooting. Changing direction.");
+        }
+
         if (Time.time > lastShootTime + shootCooldown)
         {
             animator.SetTrigger(Shoot);
@@ -116,6 +124,7 @@ public class MechaBombBehavior : EnemyBase
         }
     }
 
+
     // -------------------------------------------------------
     //  4) Devriye Hareketi
     // -------------------------------------------------------
@@ -123,14 +132,17 @@ public class MechaBombBehavior : EnemyBase
     {
         animator.SetBool(isWalking, true);
 
-        // İleride zemin yoksa veya engel varsa dön
-        if (!IsGrounded())
+        // İleride zemin yoksa veya bir duvar varsa yön değiştir
+        if (!IsGrounded() || IsWallAhead())
         {
-            Flip();
+            Flip(); // Yön değiştir
         }
 
+        // Mevcut yöne doğru hareket et
         transform.Translate((movingRight ? Vector2.right : Vector2.left) * patrolSpeed * Time.deltaTime);
     }
+
+
 
     // -------------------------------------------------------
     //  5) Bomba Fırlatma - Animasyon Event
@@ -254,6 +266,18 @@ public class MechaBombBehavior : EnemyBase
 
         return groundedLeft || groundedRight;
     }
+    private bool IsWallAhead()
+    {
+        Vector2 direction = movingRight ? Vector2.right : Vector2.left; // İleri yön
+        Vector2 origin = groundCheck.position; // Raycast başlangıç noktası
+        RaycastHit2D hit = Physics2D.Raycast(origin, direction, rayCheckDistance, groundLayer);
+
+        Debug.DrawRay(origin, direction * rayCheckDistance, Color.blue); // Raycast'i görselleştir
+
+        return hit.collider != null; // Eğer bir çarpışma varsa true döner
+    }
+
+
 
     // -------------------------------------------------------
     //  9) Ölüm Mantığı (Animasyon vb.)

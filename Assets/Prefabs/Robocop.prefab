@@ -151,6 +151,9 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  ropeLayer:
+    serializedVersion: 2
+    m_Bits: 128
   healthBarPrefab: {fileID: 4074940675643337602}
   healthBarDisplayDuration: 3
 --- !u!95 &6776206643901333211

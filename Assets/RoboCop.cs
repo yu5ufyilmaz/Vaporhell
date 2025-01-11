@@ -23,6 +23,7 @@ public class RoboCop : EnemyBase
     public Transform groundCheck;          // Zemin kontrolü için referans
     public float groundCheckDistance = 2f; // Zemin kontrol mesafesi
     public LayerMask groundLayer;          // Zemin layer'ı
+    public LayerMask ropeLayer;
 
     [Header("Health Bar Parameters")]
     public GameObject healthBarPrefab;     // Sağlık çubuğu prefab'ı
@@ -159,19 +160,21 @@ public class RoboCop : EnemyBase
     
     private void HandleAttackMode()
     {
-        // Zemin kontrolü
-        if (IsGroundAhead(attackDirection))
+        // Zemin kontrolü ve duvar kontrolü
+        if (IsGroundAhead(attackDirection) && !IsWallAhead(attackDirection))
         {
             // Platform boyunca koş
             rb.velocity = new Vector2(attackDirection * chaseSpeed, rb.velocity.y);
         }
         else
         {
-            // Platformun sonuna gelindiğinde yön değiştir
+            // Platformun sonuna gelindiğinde veya duvar varsa yön değiştir
             attackDirection *= -1; // Yönü ters çevir
             Flip(); // Sprite yönünü değiştir
+            Debug.Log("RoboCop: Wall detected during attack. Flipping direction.");
         }
     }
+
 
     
     public void StopAttack()
@@ -207,19 +210,15 @@ public class RoboCop : EnemyBase
     {
         animator.SetBool(IsWalking, true);
 
-        // İleride zemin yoksa dön
-        if (!IsGrounded())
-        {
-            Flip();
-        }
-
-        // Hareket ettir
-        transform.Translate((facingRight ? Vector2.right : Vector2.left) * patrolSpeed * Time.deltaTime);
-
-        // Zemin kontrolü yaparak platformdan düşmemesini sağla
-        if (!IsGroundAhead(facingRight ? 1f : -1f))
+        // İleride zemin yoksa veya duvar varsa dön
+        if (!IsGrounded() || IsWallAhead(facingRight ? 1f : -1f))
         {
             StartCoroutine(TurnAround());
+        }
+        else
+        {
+            // Hareket ettir
+            transform.Translate((facingRight ? Vector2.right : Vector2.left) * patrolSpeed * Time.deltaTime);
         }
     }
 
@@ -246,6 +245,18 @@ public class RoboCop : EnemyBase
             Flip();
         }
     }
+    
+    // Duvara çarpmayı kontrol eder
+    private bool IsWallAhead(float direction)
+    {
+        Vector2 origin = groundCheck.position + Vector3.right * direction * 0.5f; // İleriye doğru biraz kaydır
+        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.right * direction, 0.5f, groundLayer);
+
+        Debug.DrawRay(origin, Vector2.right * direction * 0.5f, Color.green);
+
+        return hit.collider != null;
+    }
+
 
     // -------------------------------------------------------
     // 6) Hasar Alma Fonksiyonu
@@ -309,13 +320,14 @@ public class RoboCop : EnemyBase
     // -------------------------------------------------------
     // 9) Zemin Kontrol Fonksiyonları
     // -------------------------------------------------------
+    // Zemin ve rope kontrolü: Yerde veya rope layer'da olma durumu
     private bool IsGrounded()
     {
         Vector2 originLeft = groundCheck.position + Vector3.left * 0.2f;
         Vector2 originRight = groundCheck.position + Vector3.right * 0.2f;
 
-        bool groundedLeft = Physics2D.Raycast(originLeft, Vector2.down, groundCheckDistance, groundLayer);
-        bool groundedRight = Physics2D.Raycast(originRight, Vector2.down, groundCheckDistance, groundLayer);
+        bool groundedLeft = Physics2D.Raycast(originLeft, Vector2.down, groundCheckDistance, groundLayer | ropeLayer);
+        bool groundedRight = Physics2D.Raycast(originRight, Vector2.down, groundCheckDistance, groundLayer | ropeLayer);
 
         Debug.DrawRay(originLeft, Vector2.down * groundCheckDistance, Color.red);
         Debug.DrawRay(originRight, Vector2.down * groundCheckDistance, Color.red);
@@ -323,16 +335,17 @@ public class RoboCop : EnemyBase
         return groundedLeft || groundedRight;
     }
 
-    // Yeni Zemin Kontrolü: İleriye doğru zemin olup olmadığını kontrol eder
+// İleriye doğru zemin veya rope olup olmadığını kontrol eder
     private bool IsGroundAhead(float direction)
     {
         Vector2 origin = groundCheck.position + Vector3.right * direction * 0.5f; // İleriye doğru biraz kaydır
-        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.down, groundCheckDistance, groundLayer);
+        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.down, groundCheckDistance, groundLayer | ropeLayer);
 
         Debug.DrawRay(origin, Vector2.down * groundCheckDistance, Color.blue);
 
         return hit.collider != null;
     }
+
 
     // -------------------------------------------------------
     // 10) Dönerken Bekleme (Turn Around)
