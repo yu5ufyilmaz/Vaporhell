@@ -343,13 +343,13 @@ public class PlayerController : MonoBehaviour
     //     }
     // }
 
-    private void SlideOffWall()
-    {
-        // Karakterin duvardan aşağı kaymasını sağla
-        _rb.velocity = new Vector2(0, -5f); // Aşağı doğru bir hız ver (kayma davranışı)
-        _rb.gravityScale = fallingGravityScale; // Normal düşme hızına geç
-        animator.SetBool(IsFalling, true); // Düşme animasyonu tetiklenebilir
-    }
+    // private void SlideOffWall()
+    // {
+    //     // Karakterin duvardan aşağı kaymasını sağla
+    //     _rb.velocity = new Vector2(0, -5f); // Aşağı doğru bir hız ver (kayma davranışı)
+    //     _rb.gravityScale = fallingGravityScale; // Normal düşme hızına geç
+    //     animator.SetBool(IsFalling, true); // Düşme animasyonu tetiklenebilir
+    // }
     
 
     // private void StartMultiRayClimbApproach(Vector2 snapPos, Vector2 topPoint)
