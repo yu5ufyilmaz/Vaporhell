@@ -61,7 +61,7 @@ public class FinalBossController : MonoBehaviour
         while (currentWaveIndex < waves.Count)
         {
             Wave currentWave = waves[currentWaveIndex];
-            Debug.Log($"Dalga {currentWaveIndex + 1} başlıyor! Dalga için düşman sayısı hesaplanıyor...");
+            Debug.Log($"Dalga {currentWaveIndex + 1} başlıyor!");
 
             // Dalga için toplam düşman sayısını hesapla
             remainingEnemiesInWave = 0;
@@ -70,15 +70,15 @@ public class FinalBossController : MonoBehaviour
                 remainingEnemiesInWave += enemyData.spawnCount;
                 SpawnEnemies(enemyData);
             }
+
             Debug.Log($"Dalga {currentWaveIndex + 1}: Toplam {remainingEnemiesInWave} düşman spawnlandı.");
 
             // Dalganın bitmesini bekle
             yield return new WaitUntil(() => remainingEnemiesInWave <= 0);
-            Debug.Log($"Dalga {currentWaveIndex + 1} tamamlandı! Kalan düşman: {remainingEnemiesInWave}");
+            Debug.Log($"Dalga {currentWaveIndex + 1} tamamlandı!");
 
             // Dalga bitiminde can azalt
             currentHealth--;
-            Debug.Log($"Final Boss canı azaldı: {currentHealth}");
             UpdateHealthUI();
 
             // Eğer son dalgaysa final durumuna geç
@@ -86,13 +86,18 @@ public class FinalBossController : MonoBehaviour
             {
                 isFinalWave = true;
                 Debug.Log("Son dalga! Final Boss vurulabilir durumda.");
-                break;
+                yield break; // Coroutine'den çık
             }
 
+            // Dalga indexini artır
             currentWaveIndex++;
+            Debug.Log($"Sıradaki dalga: {currentWaveIndex + 1}");
+
+            // Yeni dalga başlamadan önce bekleme süresi
             yield return new WaitForSeconds(waveCooldown);
         }
     }
+
 
     private void SpawnEnemies(EnemySpawnData enemyData)
     {

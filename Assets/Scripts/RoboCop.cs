@@ -371,7 +371,7 @@ public class RoboCop : EnemyBase
     {
         if (currentHealth <= 0)
         {
-            animator.SetBool(IsDead, true);
+            base.Die();
             rb.velocity = Vector2.zero;
             isChasing = false;
             enabled = false;

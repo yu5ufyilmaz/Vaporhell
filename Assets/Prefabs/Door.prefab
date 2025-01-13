@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6571784819766139409}
   - component: {fileID: 3405059085056891359}
   - component: {fileID: 3613677198150692739}
-  m_Layer: 0
+  m_Layer: 16
   m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -143,4 +143,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fa8c67d4774b6540b802adf55306f03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nextSceneName: YERALTI
+  nextSceneName: Underground

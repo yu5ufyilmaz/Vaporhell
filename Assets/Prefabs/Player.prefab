@@ -326,7 +326,7 @@ MonoBehaviour:
   jumpOffRopeForce: 8
   moveSpeed: 10
   runSpeedMultiplier: 1.5
-  fastJumpForce: 15
+  fastJumpForce: 17.5
   normalGravityScale: 1
   fallingGravityScale: 5
   maxJumps: 2

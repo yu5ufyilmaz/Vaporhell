@@ -14,7 +14,7 @@ public class UIController : MonoBehaviour
     private bool isPaused = false;
     private bool isMinimapLarge = false;
     private InputActions controls;
-    private static UIController instance;
+    public static UIController instance;
     private bool inputLocked = false;
     private float inputLockCooldown = 0.1f;
     private float inputLockCooldownTimer = 0f;
@@ -25,7 +25,6 @@ public class UIController : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
 
             controls = new InputActions();
             controls.UI.MinimapToggle.performed += ctx => ToggleMinimap();
@@ -161,6 +160,9 @@ public class UIController : MonoBehaviour
         controls.Player.Disable();
         controls.UI.Enable();
         pauseMenuUI.SetActive(true);
+        
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     public void ResumeGame()
@@ -178,6 +180,9 @@ public class UIController : MonoBehaviour
         controls.UI.Enable();
         pauseMenuUI.SetActive(false);
         optionsPanel.SetActive(false);
+        
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
     
     public void RestartGame()

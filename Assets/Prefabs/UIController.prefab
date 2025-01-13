@@ -608,7 +608,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2018157916543551450}
         m_TargetAssemblyTypeName: UIController, Assembly-CSharp
-        m_MethodName: OnRestartButtonPressed
+        m_MethodName: RestartGame
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -851,7 +851,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2018157916543551450}
         m_TargetAssemblyTypeName: UIController, Assembly-CSharp
-        m_MethodName: OnMainMenuButtonPressed
+        m_MethodName: MainMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

@@ -97,7 +97,7 @@ public class BasicMechanorot : EnemyBase
         if (player == null || currentHealth <= 0) return;
 
         float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-        Debug.Log($"BasicMechanorot: Distance to player is {distanceToPlayer}");
+       
 
         if (currentHealth <= 0)
         {
@@ -111,7 +111,7 @@ public class BasicMechanorot : EnemyBase
         }
         else if (distanceToPlayer <= attackRange && !isAttacking)
         {
-            Debug.Log("BasicMechanorot: Player within attack range. Starting attack.");
+           
             StartCoroutine(AttackPlayer());
         }
         else if (isPatrolling && !isAttacking)

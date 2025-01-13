@@ -41,37 +41,36 @@ public class Grenade : MonoBehaviour
 
     private void Explode()
     {
-        // Patlama efekti oluştur
+        // Patlama efektini child olarak kullanıyorsanız
         if (explosionEffect != null)
         {
-            Instantiate(explosionEffect, transform.position, Quaternion.identity);
+            explosionEffect.transform.parent = null; // Parent'tan ayır
+            explosionEffect.SetActive(true); // Efekti aktif et
+
+            ParticleSystem ps = explosionEffect.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                ps.Play(); // Particle System varsa başlat
+            }
+
+            Destroy(explosionEffect, 2f); // Efekt bittikten sonra yok et
         }
 
         // Patlama alanındaki objelere hasar ver
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius, damageableLayers);
         foreach (Collider2D hit in hits)
         {
-            Debug.Log($"Hit object: {hit.name} (Tag: {hit.tag})");
-
-            if (hit.CompareTag("Player")) // Oyuncu Collider'ı mı?
+            PlayerController playerController = hit.GetComponentInParent<PlayerController>();
+            if (playerController != null)
             {
-                // Ana objeden PlayerController'ı bul
-                PlayerController playerController = hit.GetComponentInParent<PlayerController>();
-                if (playerController != null)
-                {
-                    playerController.TakeDamage(damage); // Oyuncuya hasar ver
-                    Debug.Log("Player took damage: " + damage);
-                }
-                else
-                {
-                    Debug.LogWarning($"PlayerController not found on parent of: {hit.name}");
-                }
+                playerController.TakeDamage(damage);
             }
         }
 
         // Bombayı yok et
         Destroy(gameObject);
     }
+
 
 
     private void OnDrawGizmosSelected()
