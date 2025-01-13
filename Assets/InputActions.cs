@@ -89,6 +89,15 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Drop2"",
+                    ""type"": ""Button"",
+                    ""id"": ""03651d63-b6a1-4398-baf6-e145ebad4b6a"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -304,7 +313,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""binding"",
                     ""id"": ""817b181a-e713-4bca-8a0d-72c52ed28867"",
-                    ""path"": """",
+                    ""path"": ""<Keyboard>/space"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -313,24 +322,46 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": true
                 },
                 {
+                    ""name"": ""Two Modifiers"",
+                    ""id"": ""cc219b53-5bb9-42c2-acea-2d79cf2f7485"",
+                    ""path"": ""TwoModifiers"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Drop2"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
                     ""name"": ""modifier1"",
-                    ""id"": ""bba532a7-9847-4295-b29b-751bf982ae13"",
+                    ""id"": ""4c8a9c71-301c-44e5-ad32-1eebf6ec968a"",
                     ""path"": ""<Gamepad>/leftStick/down"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Drop"",
+                    ""action"": ""Drop2"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 },
                 {
                     ""name"": ""modifier2"",
-                    ""id"": ""3215ff85-3a61-4a05-ac65-02723798d005"",
+                    ""id"": ""c12205e0-a89e-4b69-aee2-142bd0e4b598"",
                     ""path"": ""<Gamepad>/buttonSouth"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Drop"",
+                    ""action"": ""Drop2"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""2dfa529e-7b6e-4188-a3c6-6e7570881d32"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Drop2"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
                 }
@@ -796,6 +827,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         m_Player_Crouch = m_Player.FindAction("Crouch", throwIfNotFound: true);
         m_Player_Interaction = m_Player.FindAction("Interaction", throwIfNotFound: true);
         m_Player_Drop = m_Player.FindAction("Drop", throwIfNotFound: true);
+        m_Player_Drop2 = m_Player.FindAction("Drop2", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_MinimapToggle = m_UI.FindAction("MinimapToggle", throwIfNotFound: true);
@@ -877,6 +909,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Crouch;
     private readonly InputAction m_Player_Interaction;
     private readonly InputAction m_Player_Drop;
+    private readonly InputAction m_Player_Drop2;
     public struct PlayerActions
     {
         private @InputActions m_Wrapper;
@@ -888,6 +921,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         public InputAction @Crouch => m_Wrapper.m_Player_Crouch;
         public InputAction @Interaction => m_Wrapper.m_Player_Interaction;
         public InputAction @Drop => m_Wrapper.m_Player_Drop;
+        public InputAction @Drop2 => m_Wrapper.m_Player_Drop2;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -918,6 +952,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Drop.started += instance.OnDrop;
             @Drop.performed += instance.OnDrop;
             @Drop.canceled += instance.OnDrop;
+            @Drop2.started += instance.OnDrop2;
+            @Drop2.performed += instance.OnDrop2;
+            @Drop2.canceled += instance.OnDrop2;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -943,6 +980,9 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
             @Drop.started -= instance.OnDrop;
             @Drop.performed -= instance.OnDrop;
             @Drop.canceled -= instance.OnDrop;
+            @Drop2.started -= instance.OnDrop2;
+            @Drop2.performed -= instance.OnDrop2;
+            @Drop2.canceled -= instance.OnDrop2;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -1095,6 +1135,7 @@ public partial class @InputActions: IInputActionCollection2, IDisposable
         void OnCrouch(InputAction.CallbackContext context);
         void OnInteraction(InputAction.CallbackContext context);
         void OnDrop(InputAction.CallbackContext context);
+        void OnDrop2(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

@@ -150,6 +150,7 @@ public class PlayerController : MonoBehaviour
     private InputAction rollAction;
     private InputAction crouchAction;
     private InputAction dropAction;
+    private InputAction dropAction2;
     private InputAction interactAction;
     
     private TeleportPoint nearbyTeleportPoint = null;
@@ -165,6 +166,7 @@ public class PlayerController : MonoBehaviour
         rollAction = playerInput.actions["Roll"];
         crouchAction = playerInput.actions["Crouch"];
         dropAction = playerInput.actions["Drop"];
+        dropAction2 = playerInput.actions["Drop2"];
         interactAction = playerInput.actions["Interaction"];
     }
 
@@ -196,7 +198,7 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         
-        if (isOnDropThroughPlatform && dropAction.triggered)
+        if (isOnDropThroughPlatform && (dropAction.triggered || dropAction2.triggered))
         {
             DropThroughPlatform();
         }
