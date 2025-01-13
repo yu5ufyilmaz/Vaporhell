@@ -377,10 +377,7 @@ public class RoboCop : EnemyBase
             enabled = false;
 
             Debug.Log("RoboCop: Died.");
-
-            // Ölüm animasyonunu oynatmayı tamamladıktan sonra yok et
-            // Örneğin, animasyonun bittiği bir event ile yok etme yapılabilir
-            Destroy(gameObject, 1f); // 1 saniye bekleyerek yok et
+            Destroy(gameObject); 
         }
     }
 }

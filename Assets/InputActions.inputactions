@@ -24,15 +24,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Run",
-                    "type": "Button",
-                    "id": "756c09b4-2822-46a7-8cfa-c55d3fbc37b3",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Shoot",
                     "type": "Button",
                     "id": "d6952824-fc14-40cc-a170-ea4339dc2ac3",
@@ -54,15 +45,6 @@
                     "name": "Crouch",
                     "type": "Button",
                     "id": "1cb03e3a-724b-4b42-98c8-b31010da3524",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Teleport",
-                    "type": "Button",
-                    "id": "73b32d9c-b8c3-4fd4-a9eb-3ca672df8e8b",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -178,28 +160,6 @@
                 },
                 {
                     "name": "",
-                    "id": "b4c687f3-a466-46d4-ac8f-7b58f7a823fa",
-                    "path": "<Gamepad>/rightShoulder",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Run",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "a4d8b59f-2602-4bba-b620-571cfe1eb7f4",
-                    "path": "<Keyboard>/leftShift",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Run",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "d171a4a6-eea2-4ceb-8a2c-2e7ca25d9912",
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
@@ -261,28 +221,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "Crouch",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "da76fb44-9ce2-4516-82ea-8041c48d706b",
-                    "path": "<Keyboard>/r",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Teleport",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "5399d88b-1dbc-41f9-8327-2c66178bc970",
-                    "path": "<Gamepad>/rightShoulder",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Teleport",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

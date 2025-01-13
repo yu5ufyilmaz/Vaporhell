@@ -41,11 +41,11 @@ GameObject:
   m_Component:
   - component: {fileID: 6287942756057196882}
   - component: {fileID: 8891711767780970457}
-  - component: {fileID: 6783582723416166180}
   - component: {fileID: 1379248725259568850}
   - component: {fileID: 711165090841552209}
   - component: {fileID: 7730448972816809615}
   - component: {fileID: 7936395422744097646}
+  - component: {fileID: 4283018617709190412}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -124,41 +124,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!70 &6783582723416166180
-CapsuleCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1605945386542671820}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 6200000, guid: 7a5df41e2a61e7d4ba6585bc937941f8, type: 2}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: -0.0698657}
-  m_Size: {x: 1, y: 3.2392912}
-  m_Direction: 0
 --- !u!114 &1379248725259568850
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -347,18 +312,17 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 32832
-  topRayOffsetY: 1.2
-  bottomRayOffsetY: -0.8
-  horizontalRayOriginOffsetY: 1.2
-  horizontalRayDistance: 0.8
-  verticalRayOriginOffsetY: 0.2
+  topRayOffsetY: 2.7
+  bottomRayOffsetY: 0.6
+  horizontalRayDistance: 1
   verticalRayDistance: 1.2
   climbDuration: 0.6
   climbTopOffset: 0.5
-  climbSpeed: 5
+  tileSize: 1
   ropeLayer:
     serializedVersion: 2
     m_Bits: 128
+  climbSpeedValue: 5
   jumpOffRopeForce: 8
   moveSpeed: 10
   runSpeedMultiplier: 1.5
@@ -382,7 +346,51 @@ MonoBehaviour:
   offsetRight: {x: 2, y: 0, z: 0}
   offsetLeft: {x: -2, y: 0, z: 0}
   transitionDuration: 0.5
-  tileSize: 1
+--- !u!61 &4283018617709190412
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605945386542671820}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 6200000, guid: 7a5df41e2a61e7d4ba6585bc937941f8, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0.027145863, y: -0.105035305}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 4.4466147, y: 6.666667}
+    newSize: {x: 1, y: 2}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1.3085413, y: 3.184886}
+  m_EdgeRadius: 0
 --- !u!1 &4198049987035765497
 GameObject:
   m_ObjectHideFlags: 0
