@@ -28,10 +28,7 @@ public class FinalBossController : MonoBehaviour
 
     [Header("UI Parameters")]
     [SerializeField] private Slider healthBar; // Can göstergesi için Slider
-
-    [Header("Input System")]
-    [SerializeField] private InputActionReference attackAction; // Attack eylemi için referans
-
+    
     private int currentWaveIndex = 0;
     private int currentHealth;
     private bool isFinalWave = false;
@@ -136,12 +133,8 @@ public class FinalBossController : MonoBehaviour
     {
         if (isFinalWave && currentHealth <= 0)
         {
-            // Yeni Input System üzerinden sol tık kontrolü
-            if (attackAction.action.triggered) // InputActionReference üzerinden tetikleme kontrolü
-            {
-                Debug.Log("Final Boss öldürülmeye hazır! Sol tık ile vurabilirsiniz.");
+            
                 Die();
-            }
         }
     }
 
@@ -149,6 +142,6 @@ public class FinalBossController : MonoBehaviour
     {
         Debug.Log("Final Boss öldü!");
         Destroy(gameObject); // Boss yok olur
-        SceneManager.LoadScene("MainMenu");
+        SceneManager.LoadScene("Boss");
     }
 }
