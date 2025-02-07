@@ -1236,7 +1236,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3613677198150692739, guid: 7da390bb1afd3a64486a92057a33831b, type: 3}
       propertyPath: nextSceneName
-      value: Boss
+      value: FinalScene
       objectReference: {fileID: 0}
     - target: {fileID: 7910884208837242344, guid: 7da390bb1afd3a64486a92057a33831b, type: 3}
       propertyPath: m_LocalPosition.x
