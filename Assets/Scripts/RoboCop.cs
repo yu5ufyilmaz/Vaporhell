@@ -136,7 +136,7 @@ public class RoboCop : EnemyBase
         // Zemin kontrolü yaparak platformdan düşmemesini sağla
         if (IsGroundAhead(chaseDirection))
         {
-            rb.velocity = new Vector2(chaseDirection * chaseSpeed, rb.velocity.y);
+            rb.linearVelocity = new Vector2(chaseDirection * chaseSpeed, rb.linearVelocity.y);
         }
         else
         {
@@ -164,7 +164,7 @@ public class RoboCop : EnemyBase
         if (IsGroundAhead(attackDirection) && !IsWallAhead(attackDirection))
         {
             // Platform boyunca koş
-            rb.velocity = new Vector2(attackDirection * chaseSpeed, rb.velocity.y);
+            rb.linearVelocity = new Vector2(attackDirection * chaseSpeed, rb.linearVelocity.y);
         }
         else
         {
@@ -180,7 +180,7 @@ public class RoboCop : EnemyBase
     public void StopAttack()
     {
         isAttacking = false;
-        rb.velocity = Vector2.zero; // Hareketi durdur
+        rb.linearVelocity = Vector2.zero; // Hareketi durdur
         animator.SetBool(IsChasing, false); // Saldırı animasyonunu durdur
     }
 
@@ -353,7 +353,7 @@ public class RoboCop : EnemyBase
     IEnumerator TurnAround()
     {
         isWaiting = true;
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         animator.SetBool(IsWalking, false);
 
         Flip();
@@ -372,7 +372,7 @@ public class RoboCop : EnemyBase
         if (currentHealth <= 0)
         {
             base.Die();
-            rb.velocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
             isChasing = false;
             enabled = false;
 

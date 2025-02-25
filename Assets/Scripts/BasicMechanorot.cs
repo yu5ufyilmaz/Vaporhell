@@ -149,7 +149,7 @@ public class BasicMechanorot : EnemyBase
     protected override void Die()
     {
         animator.SetBool(IsDead, true);
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         isPatrolling = false;
         rb.constraints = RigidbodyConstraints2D.FreezeAll;
 
@@ -172,7 +172,7 @@ public class BasicMechanorot : EnemyBase
         animator.SetBool(IsWalking, true);
 
         Vector2 direction = (player.position - transform.position).normalized;
-        rb.velocity = new Vector2(direction.x * moveSpeed * runSpeedMultiplier, rb.velocity.y);
+        rb.linearVelocity = new Vector2(direction.x * moveSpeed * runSpeedMultiplier, rb.linearVelocity.y);
 
         // Sprite flip
         if (direction.x > 0)
@@ -194,7 +194,7 @@ public class BasicMechanorot : EnemyBase
         animator.SetBool(IsWalking, true);
 
         Vector2 direction = (patrolTarget - (Vector2)transform.position).normalized;
-        rb.velocity = new Vector2(direction.x * moveSpeed, rb.velocity.y);
+        rb.linearVelocity = new Vector2(direction.x * moveSpeed, rb.linearVelocity.y);
 
         if (Vector2.Distance(transform.position, patrolTarget) < 0.2f)
         {
@@ -212,7 +212,7 @@ public class BasicMechanorot : EnemyBase
     IEnumerator WaitAndSetNewPatrolTarget()
     {
         isWaiting = true;
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         animator.SetBool(IsWalking, false);
         
 
@@ -236,14 +236,14 @@ public class BasicMechanorot : EnemyBase
 
     void Idle()
     {
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         animator.SetBool(IsWalking, false);
     }
 
     IEnumerator AttackPlayer()
     {
         isAttacking = true;
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         
 
         int randomAttackAnimation = Random.Range(0, 2);

@@ -428,7 +428,7 @@ public class PlayerController : MonoBehaviour
             _rb.gravityScale = fallingGravityScale;
 
             // Sadece ciddi şekilde aşağı hız varsa falling animasyonu
-            if (_rb.velocity.y < -2.5f)
+            if (_rb.linearVelocity.y < -2.5f)
             {
                 if (!animator.GetBool(IsFalling))
                 {
@@ -461,7 +461,7 @@ public class PlayerController : MonoBehaviour
             }
             else if (remainingJumps > 0)
             {
-                _rb.velocity = new Vector2(_rb.velocity.x, fastJumpForce);
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, fastJumpForce);
                 remainingJumps--;
                 hasJumped = true;
                 _rb.gravityScale = fallingGravityScale;
@@ -488,7 +488,7 @@ private void JumpOffRope()
     _rb.gravityScale = fallingGravityScale;
 
     // Zıplama kuvvetini uygula
-    _rb.velocity = new Vector2(_rb.velocity.x, jumpOffRopeForce);
+    _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpOffRopeForce);
 
     // Opsiyonel: Zıplama animasyonunu tetikle
     animator.SetTrigger(IsJumping);
@@ -535,9 +535,9 @@ private void JumpOffRope()
     {
         if (isWallSliding)
         {
-            if (_rb.velocity.y < wallSlideSpeed)
+            if (_rb.linearVelocity.y < wallSlideSpeed)
             {
-                _rb.velocity = new Vector2(_rb.velocity.x, wallSlideSpeed);
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, wallSlideSpeed);
             }
         }
     }
@@ -554,7 +554,7 @@ private void JumpOffRope()
         float currentSpeed = moveSpeed;
 
         // Karakterin Rigidbody'sini hareket ettirin
-        _rb.velocity = new Vector2(xValue * currentSpeed, _rb.velocity.y);
+        _rb.linearVelocity = new Vector2(xValue * currentSpeed, _rb.linearVelocity.y);
 
         // Karakterin sağa/sola bakışını ayarla
         if (xValue != 0) 
@@ -563,7 +563,7 @@ private void JumpOffRope()
         }
 
         // Blend Tree veya animasyon için MoveSpeed parametresini güncelle
-        float speedMagnitude = Mathf.Abs(_rb.velocity.x);
+        float speedMagnitude = Mathf.Abs(_rb.linearVelocity.x);
         animator.SetFloat(MoveSpeedParam, speedMagnitude);
 
         animator.SetBool(IsMoving, speedMagnitude > 0.1f);
@@ -582,7 +582,7 @@ private void JumpOffRope()
         isShooting = true;
         canShoot = false;
 
-        _rb.velocity = Vector2.zero;
+        _rb.linearVelocity = Vector2.zero;
         animator.SetTrigger(Shoot);
 
         SoundManager.Instance.PlaySFX(shootSound);
@@ -592,7 +592,7 @@ private void JumpOffRope()
         Vector2 shootDirection = _spriteRenderer.flipX ? Vector2.right : Vector2.left;
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
         Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-        bulletRb.velocity = shootDirection * bulletSpeed;
+        bulletRb.linearVelocity = shootDirection * bulletSpeed;
 
         float remainingCooldown = shootCooldown - shootAnimationDuration;
         if (remainingCooldown > 0f)
@@ -664,11 +664,11 @@ private void JumpOffRope()
 
         float rollDirection = _spriteRenderer.flipX ? 1f : -1f;
         
-        _rb.velocity = new Vector2(rollDirection * rollSpeed, _rb.velocity.y);
+        _rb.linearVelocity = new Vector2(rollDirection * rollSpeed, _rb.linearVelocity.y);
         
         yield return new WaitForSeconds(rollDuration);
         
-        _rb.velocity = new Vector2(0, _rb.velocity.y);
+        _rb.linearVelocity = new Vector2(0, _rb.linearVelocity.y);
         isRolling = false;
         
         yield return new WaitForSeconds(rollCooldown);
@@ -683,7 +683,7 @@ private void JumpOffRope()
         float verticalInput = moveInput.y; // Yukarı/aşağı girdi
 
         // Rigidbody'yi dikey yönde hareket ettir
-        _rb.velocity = new Vector2(0, verticalInput * climbSpeedValue);
+        _rb.linearVelocity = new Vector2(0, verticalInput * climbSpeedValue);
         _rb.gravityScale = 0f; // Tırmanırken yerçekimi devre dışı
 
         // Blend Tree’ye parametre setle
@@ -694,7 +694,7 @@ private void JumpOffRope()
     private void HandleCrouch()
     {
         // Eğer crouch yapılamayacak bir durumdaysa, çıkış yap
-        if (!_isGrounded || isRolling || _isDead || Mathf.Abs(_rb.velocity.y) > 0.1f)
+        if (!_isGrounded || isRolling || _isDead || Mathf.Abs(_rb.linearVelocity.y) > 0.1f)
         {
             if (isCrouching)
             {
@@ -728,7 +728,7 @@ private void JumpOffRope()
         {
             isCrouching = true;
             animator.SetBool(IsCrouching, true);
-            _rb.velocity = Vector2.zero;
+            _rb.linearVelocity = Vector2.zero;
         }
     }
 
@@ -856,7 +856,7 @@ private void JumpOffRope()
             isOnRope = true;
             animator.SetBool(IsOnRope, true);
             _rb.gravityScale = 0f; // Yerçekimi devre dışı
-            _rb.velocity = Vector2.zero; // Hareket durdurulur
+            _rb.linearVelocity = Vector2.zero; // Hareket durdurulur
         }
 
         TeleportPoint teleportPoint = collision.GetComponent<TeleportPoint>();
@@ -919,7 +919,7 @@ private void JumpOffRope()
     {
         if (_rb != null)
         {
-            _rb.velocity = Vector2.zero;
+            _rb.linearVelocity = Vector2.zero;
         }
 
         transform.position = targetPosition;
@@ -948,7 +948,7 @@ private void JumpOffRope()
         _isDead = true;
 
         animator.SetTrigger(DieTrigger);
-        _rb.velocity = Vector2.zero;
+        _rb.linearVelocity = Vector2.zero;
         _rb.gravityScale = 0f;
         _rb.constraints = RigidbodyConstraints2D.FreezePositionY;
         playerInput.enabled = false;

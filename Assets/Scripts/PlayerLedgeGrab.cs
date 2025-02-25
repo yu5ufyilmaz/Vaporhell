@@ -50,7 +50,7 @@ public class PlayerLedgeGrab : MonoBehaviour
     private void StartLedgeGrab()
     {
         isGrabbed = true;
-        rb.velocity = Vector2.zero; // Hareketi durdur
+        rb.linearVelocity = Vector2.zero; // Hareketi durdur
         rb.gravityScale = 0; // Yerçekimini devre dışı bırak
         animator.SetBool("isHanging", true); // Tutunma animasyonu başlat
     }

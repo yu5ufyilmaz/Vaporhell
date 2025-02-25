@@ -32,7 +32,7 @@ public class Grenade : MonoBehaviour
         hasLanded = true;
 
         // Rigidbody'yi durdur ve hareketi devre dışı bırak
-        rb.velocity = Vector2.zero; // Hareketi durdur
+        rb.linearVelocity = Vector2.zero; // Hareketi durdur
         rb.bodyType = RigidbodyType2D.Static; // Statik yaparak sabitle
 
         // Patlamayı gecikmeli olarak tetikle
